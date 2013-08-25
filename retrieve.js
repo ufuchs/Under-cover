@@ -168,6 +168,8 @@ function writePackageContent(res, packageName) {
 
 }
 
+
+var http;
 //
 //
 //
@@ -175,7 +177,7 @@ function getText(url, callback) {
 
     var strResult,
         status,
-        http,
+//        http,
         packageName = extractPackageNameFromUrl(url);
 
 
@@ -183,11 +185,46 @@ function getText(url, callback) {
         // Create the WinHTTPRequest ActiveX Object.
         http = new ActiveXObject("WinHttp.WinHttpRequest.5.1");
 
+//        http = new ActiveXObject("Microsoft.XMLHTTP");
+
         //  Create an HTTP request.
-        http.Open("GET", url, false);
+        http.Open("GET", url, true);
+
+
+//        http.onreadystatechange = http_OnResponseFinished;
 
         //  Send the HTTP request.
         http.Send();
+
+        WScript.Echo("Trying " + packageName);
+
+//        http.OnResponseDataAvailable = null;
+
+        WScript.Echo(http.WaitForResponse());
+
+
+        /*
+
+
+var xmlServerHttp = new ActiveXObject("Msxml2.ServerXMLHTTP.6.0");
+xmlServerHttp.open("GET", "http://localhost/sample.xml", true);
+xmlServerHttp.send();
+while (xmlServerHttp.readyState != 4) {
+   xmlServerHttp.waitForResponse(1000);
+}
+
+
+
+        */
+
+
+        //
+        // http://msdn.microsoft.com/en-us/library/ms765535(v=vs.85).aspx
+        //
+        while (http.WaitForResponse() === -1) {
+            WScript.StdOut.Write('.');
+            WScript.Sleep(1000);
+        }
 
         status = http.Status;
 
@@ -196,7 +233,6 @@ function getText(url, callback) {
             WScript.Quit(1);
         }
 
-//        writePackageContent(http.ResponseBody, packageName);
         callback(http.ResponseBody, packageName);
 
 
@@ -211,11 +247,24 @@ function getText(url, callback) {
     return strResult;
 }
 
+function http_OnResponseDataAvailable(data) {
+    WScript.Echo('Daten');
+}
+
+function http_OnResponseFinished() {
+    WScript.Echo('Schluß');
+}
+
+function http_OnResponseStart(status, contenttype) {
+    WScript.Echo(status);
+}
 
 //WScript.Echo(getCliToolsUrl());
 
 
 getText("http://www.graphviz.org/pub/graphviz/stable/windows/graphviz-2.32.zip", writePackageContent);
+
+//getText("https://phs.googlecode.com/files/Download%20File%20Test.zip", writePackageContent);
 
 //var str = packages.x86.yices;
 
