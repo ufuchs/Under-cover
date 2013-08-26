@@ -20,7 +20,28 @@
 // configuration
 // ////////////////////////////////////////////////////////////////////////////
 
+// http://download.jetbrains.com/mps/MPS-2.5.4.zip
+// http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jre-6u45-windows-i586.exe
+// http://download.jetbrains.com/mps/MPS-2.5.4.exe
+
 var packages = {
+
+    "mps" : {
+        "url" : "http://download.jetbrains.com/mps/MPS-2.5.4.zip",
+        "install" : {
+            "dir" : "",
+            "options" : "b",
+            "patch" : "a"
+        }
+    },
+
+    "java6" : {
+        "url" : "http://download.oracle.com/otn-pub/java/jdk/6u45-b06/jre-6u45-windows-i586.exe",
+        "install" : {
+            "dir" : "",
+            "options" : ""
+        }
+    },
 
 
     "cliTools" : {

@@ -29,94 +29,49 @@ var e = {
 
     "100" : "Continue",
     "101" : "Switching protocols",
-    "200" : "OK"
+    "200" : "OK",
+    "201" : "Created",
+    "202" : "Accepted",
+    "203" : "Non-Authoritative Information",
+    "204" : "No Content",
+    "205" : "Reset Content",
+    "206" : "Partial Content",
+    "300" : "Multiple Choices",
+    "301" : "Moved Permanently",
+    "302" : "Found",
+    "303" : "See Other",
+    "304" : "Not Modified",
+    "305" : "Use Proxy",
+    "307" : "Temporary Redirect",
+    "400" : "Bad Request",
+    "401" : "Unauthorized",
+    "402" : "Payment Required",
+    "403" : "Forbidden",
+    "404" : "Not Found",
+    "405" : "Method Not Allowed",
+    "406" : "Not Acceptable",
+    "407" : "Proxy Authentication Required",
+    "408" : "Request Timeout",
+    "409" : "Conflict",
+    "410" : "Gone",
+    "411" : "Length Required",
+    "412" : "Precondition Failed",
+    "413" : "Request Entity Too Large",
+    "414" : "Request-URI Too Long",
+    "415" : "Unsupported Media Type",
+    "416" : "Requested Range Not Suitable",
+    "417" : "Expectation Failed",
+    "500" : "Internal Server Error",
+    "501" : "Not Implemented",
+    "502" : "Bad Gateway",
+    "503" : "Service Unavailable",
+    "504" : "Gateway Timeout",
+    "505" : "HTTP Version Not Supported"
 };
 
-/*
-
-100
-Continue
-101
-Switching protocols
-200
-OK
-201
-Created
-202
-Accepted
-203
-Non-Authoritative Information
-204
-No Content
-205
-Reset Content
-206
-Partial Content
-300
-Multiple Choices
-301
-Moved Permanently
-302
-Found
-303
-See Other
-304
-Not Modified
-305
-Use Proxy
-307
-Temporary Redirect
-400
-Bad Request
-401
-Unauthorized
-402
-Payment Required
-403
-Forbidden
-404
-Not Found
-405
-Method Not Allowed
-406
-Not Acceptable
-407
-Proxy Authentication Required
-408
-Request Timeout
-409
-Conflict
-410
-Gone
-411
-Length Required
-412
-Precondition Failed
-413
-Request Entity Too Large
-414
-Request-URI Too Long
-415
-Unsupported Media Type
-416
-Requested Range Not Suitable
-417
-Expectation Failed
-500
-Internal Server Error
-501
-Not Implemented
-502
-Bad Gateway
-503
-Service Unavailable
-504
-Gateway Timeout
-505
-HTTP Version Not Supported
-
-*/
-
+//
+//
+//
 var httpDownloader = function () {
 
     var VERSION = '0.1',
@@ -159,13 +114,30 @@ var httpDownloader = function () {
     }
 
     //
+    // http://msdn.microsoft.com/en-us/library/windows/desktop/aa384059(v=vs.85).aspx
     //
-    //
-    function httpRequest(url, cb) {
+    function httpRequest(params, cb) {
+
+
+    params = {
+        url : 'https://phs.googlecode.com/files/Download%20File%20Test.zip',
+        proxy : {
+            settings : '',
+            server : '',
+            bypassList : ''
+        }
+    };
+
 
         try {
 
-            http.Open("GET", url, asynchron);
+            // Use proxy_server for all requests outside of
+            // the microsoft.com domain.
+            httpq.SetProxy( HTTPREQUEST_PROXYSETTING_PROXY,
+                "proxy_server:80",
+                "*.aucoteam.de");
+
+            http.Open("GET", params.url, asynchron);
 
             http.Send();
 
@@ -198,21 +170,37 @@ var httpDownloader = function () {
 
 var dl = httpDownloader(),
 //    url = 'http://www.graphviz.org/pub/graphviz/stable/windows/graphviz-2.32.zip';
-    url = 'https://phs.googlecode.com/files/Download%20File%20Test.zip';
+    url = 'https://phs.googlecode.com/files/Download%20File%20Test.zip',
 
-dl.httpRequest(url, function (err, data) {
+    params = {
+        url : 'https://phs.googlecode.com/files/Download%20File%20Test.zip',
+        proxy : ""
+    };
+
+/*
+// HttpRequest SetCredentials flags.
+HTTPREQUEST_PROXYSETTING_DEFAULT   = 0;
+HTTPREQUEST_PROXYSETTING_PRECONFIG = 0;
+HTTPREQUEST_PROXYSETTING_DIRECT    = 1;
+HTTPREQUEST_PROXYSETTING_PROXY     = 2;
+*/
+
+dl.httpRequest(params, function (err, data) {
+
+    var msg,
+        status;
+
 
     WScript.Echo("Trying " + packageName);
 
     if (err !== null) {
-        var strResult = "WinHTTP returned error: " + (err.number & 0xFFFF).toString() + "\n";
-        strResult += err.description;
-        WScript.Echo(strResult);
-
+        msg = "WinHTTP returned error: " + (err.number & 0xFFFF).toString() + "\n";
+        msg += err.description;
     } else {
-        WScript.Echo(dl.status() + ' ' + e[dl.status()]);
+        status = dl.status();
+        msg = status + ' ' + e[status];
     }
 
-
+    WScript.Echo(msg);
 
 });
