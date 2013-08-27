@@ -21,6 +21,13 @@ var config = {
 
         proxy : {
             isActive : false,
+
+            // HttpRequest SetCredentials flags.
+            //
+            // HTTPREQUEST_PROXYSETTING_DEFAULT   = 0;
+            // HTTPREQUEST_PROXYSETTING_PRECONFIG = 0;
+            // HTTPREQUEST_PROXYSETTING_DIRECT    = 1;
+            // HTTPREQUEST_PROXYSETTING_PROXY     = 2;
             settings : 0,
             server : 'http://178.15.127.98:80',
             bypassList : '*.aucoteam.de'
