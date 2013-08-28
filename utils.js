@@ -108,9 +108,12 @@ var utils = (function () {
             uri = null,
             version = getPackageVersion(name),
             pkg = {
-                name : name,
-                fileName : '',
-                uri : ''
+                name : name,        // name of the package
+                desc : '',          // short description of the package
+                fileName : '',      // file to download
+                uri : '',           // URI of the package
+                status : -1,        // http status code
+                msg : ''            // installer msg
             };
 
         for (prop in content) {
@@ -133,6 +136,8 @@ var utils = (function () {
 
                     // name of the installer file (exe or zip)
                     pkg.fileName = extractPackageNameFromUrl(pkg.uri);
+
+                    pkg.desc = applyVersion(content.desc, version);
 
 
 
@@ -183,15 +188,4 @@ var utils = (function () {
     };
 
 }());
-
-var i,
-    toInstall,
-    pkg;
-
-toInstall = utils.getPackagesToInstall();
-
-for (i = 0; i < toInstall.length; i++) {
-    WScript.Echo(toInstall[i].fileName);
-
-}
 

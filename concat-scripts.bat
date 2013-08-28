@@ -1,4 +1,4 @@
 @echo off
 
-copy config.js /A + utils.js /A app.js
+copy config.js /A + utils.js /A + downloader.js /A app.js
 

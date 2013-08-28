@@ -1,5 +1,5 @@
-/*!
- * utils
+ /*!
+ * downloader
  * Copyright(c) 2013 Uli Fuchs <ufuchs@gmx.com>
  * MIT Licensed
  *
@@ -10,7 +10,7 @@
 //
 //
 //
-var httpDownloader = function () {
+var httpDownloader = (function () {
 
     var VERSION = '0.1',
         http = new ActiveXObject("WinHttp.WinHttpRequest.5.1"),
@@ -61,19 +61,24 @@ var httpDownloader = function () {
             "505" : "HTTP Version Not Supported"
         };
 
+    // Writes the http response body to file.
     //
+    // @param {res} Object - resoponse body of request
+    // @param {packageName} String
     //
-    //
+    // @api : private
+
     function writeHttpContent(res, packageName) {
 
-        adodb = new ActiveXObject("ADODB.Stream");
         adodb.Open();
         adodb.Type = 1;
         adodb.Write(res);
 
         adodb.Position = 0;
 
-        adodb.SaveToFile(packageName);
+        WScript.Echo(config.app.downloadDir + '\\' + packageName);
+
+        adodb.SaveToFile(config.app.downloadDir + '\\' + packageName);
         adodb.Close();
 
     }
@@ -81,31 +86,26 @@ var httpDownloader = function () {
     //
     // http://msdn.microsoft.com/en-us/library/windows/desktop/aa384059(v=vs.85).aspx
     //
-    function httpRequest(params, cb) {
+    // @api : private
 
+    function httpRequest(url, cb) {
 
-    params = {
-        url : 'https://phs.googlecode.com/files/Download%20File%20Test.zip',
-        proxy : {
-            settings : '',
-            server : '',
-            bypassList : ''
-        }
-    };
-
+        var proxy = config.app.proxy;
 
         try {
 
             // Use proxy_server for all requests outside of
-            // the microsoft.com domain.
-            httpq.SetProxy( HTTPREQUEST_PROXYSETTING_PROXY,
-                "proxy_server:80",
-                "*.aucoteam.de");
+            // your domain.
+            if (proxy.active === true) {
+                http.SetProxy(proxy.settings, proxy.server,
+                    proxy.bypassList);
+            }
 
-            http.Open("GET", params.url, asynchron);
+            http.Open("GET", url, true);
 
             http.Send();
 
+            // Draw '....' until download is finished
             while (!http.WaitForResponse(0)) {
                 WScript.StdOut.Write('.');
                 WScript.Sleep(1000);
@@ -122,43 +122,79 @@ var httpDownloader = function () {
 
     }
 
-    return {
-        httpRequest : function (url, cb) {
-            return httpRequest(url, cb);
-        },
-        status : function () {
-            return status;
-        }
-    };
+    //
+    //
+    //
 
-};
+    function downloadPackage(pkg) {
 
-var dl = httpDownloader(),
-//    url = 'http://www.graphviz.org/pub/graphviz/stable/windows/graphviz-2.32.zip';
-    url = 'https://phs.googlecode.com/files/Download%20File%20Test.zip',
+        WScript.Echo("Trying " + pkg.desc);
+        WScript.Echo("Trying " + pkg.uri);
 
-    params = {
-        url : 'https://phs.googlecode.com/files/Download%20File%20Test.zip',
-        proxy : ""
-    };
+        httpRequest(pkg.uri, function (err, data) {
 
+            var msg;
 
-dl.httpRequest(params, function (err, data) {
+            if (err !== null) {
 
-    var msg,
-        status;
+                msg = "WinHTTP returned error: " + (err.number & 0xFFFF).toString() + "\n";
+                msg += err.description;
+                pkg.msg = msg;
+                pkg.status = 303;
 
+            } else {
 
-    WScript.Echo("Trying " + packageName);
+                pkg.msg = status + ' ' + statusToHuman[status];
+                pkg.status = status;
 
-    if (err !== null) {
-        msg = "WinHTTP returned error: " + (err.number & 0xFFFF).toString() + "\n";
-        msg += err.description;
-    } else {
-        status = dl.status();
-        msg = status + ' ' + statusToHuman[status];
+                writeHttpContent(data, pkg.fileName);
+
+            }
+
+        });
+
     }
 
-    WScript.Echo(msg);
+    //
+    // the return section of this closure
+    //
+    return {
 
-});
+        downloadPackage : function (pkg) {
+            return downloadPackage(pkg);
+        }
+
+    };
+
+}());
+
+var i,
+    toInstall,
+    pkg,
+    params = {
+//    url = 'http://www.graphviz.org/pub/graphviz/stable/windows/graphviz-2.32.zip',
+//    url = 'https://phs.googlecode.com/files/Download%20File%20Test.zip',
+
+    },
+    pkg = {
+        name : 'Test',        // name of the package
+        desc : 'Test package',          // short description of the package
+        fileName : 'Download%20File%20Test.zip',      // file to download
+        uri : 'https://phs.googlecode.com/files/Download%20File%20Test.zip',           // URI of the package
+        status : -1,        // http status code
+        msg : ''            // installer msg
+    };
+
+httpDownloader.downloadPackage(pkg);
+WScript.Echo(pkg.msg);
+
+/*
+toInstall = utils.getPackagesToInstall();
+
+for (i = 0; i < toInstall.length; i++) {
+    WScript.Echo(toInstall[i].fileName);
+    WScript.Echo(toInstall[i].desc);
+    WScript.Echo('------------------------');
+
+}
+*/
