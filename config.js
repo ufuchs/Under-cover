@@ -35,17 +35,6 @@ var config = {
 
     },
 
-    dependencies : {
-
-        mps : "2.5.4",
-        java : "6u45",
-        graphviz : "2.32",
-        cbmc : "4-4",
-        nusmv : "2.5.4",
-        yices : "1.0.39"
-
-    },
-
     install : {
 
         mps : {
@@ -63,11 +52,54 @@ var config = {
             dir : ''
         },
 
-        order : ['mps', 'java', 'graphviz', 'cbmc', 'nusvm', 'yices', 'cygwin']
+        order : ['mps', 'mbeddr']
 
     },
 
+    ///////////////////////////////////////////////////////////////////////////
+
+    depGraph : {
+
+        // function 'flattenDeps'
+        mbeddr : {
+            version : "",
+            deps : {
+                mps : {
+                    version : "2.5.4",
+                    deps : {
+                        java : {
+                            version : "6u45"
+                        }
+                    }
+                },
+                cliTools : {
+                    graphviz : {
+                        version : "2.32"
+                    },
+                    cbmc : {
+                        version : "4-4"
+                    }
+                }
+            }
+        }
+
+    },
+
+    dependencies : {
+
+        mps : "2.5.4",
+        java : "6u45",
+        graphviz : "2.32",
+        cbmc : "4-4",
+        nusmv : "2.5.4",
+        yices : "1.0.39"
+
+    },
+
+
     packages : {
+
+        ignore : ['mps', 'java', 'graphviz', 'cbmc', 'nusvm', 'yices', 'cygwin'],
 
         mps : {
             uri :       "http://download.jetbrains.com/mps/MPS-{{version}}.zip",

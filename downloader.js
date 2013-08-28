@@ -5,16 +5,16 @@
  *
  */
 
-'use strict'
-
 //
 //
 //
 var httpDownloader = (function () {
 
+    'use strict';
+
     var VERSION = '0.1',
         http = new ActiveXObject("WinHttp.WinHttpRequest.5.1"),
-        adodb = new ActiveXObject("ADODB.Stream"),
+//        adodb = new ActiveXObject("ADODB.Stream"),
         asynchron = true,
         status = 0,
         statusToHuman = {
@@ -61,28 +61,6 @@ var httpDownloader = (function () {
             "505" : "HTTP Version Not Supported"
         };
 
-    // Writes the http response body to file.
-    //
-    // @param {res} Object - resoponse body of request
-    // @param {packageName} String
-    //
-    // @api : private
-
-    function writeHttpContent(res, packageName) {
-
-        adodb.Open();
-        adodb.Type = 1;
-        adodb.Write(res);
-
-        adodb.Position = 0;
-
-        WScript.Echo(config.app.downloadDir + '\\' + packageName);
-
-        adodb.SaveToFile(config.app.downloadDir + '\\' + packageName);
-        adodb.Close();
-
-    }
-
     //
     // http://msdn.microsoft.com/en-us/library/windows/desktop/aa384059(v=vs.85).aspx
     //
@@ -101,7 +79,7 @@ var httpDownloader = (function () {
                     proxy.bypassList);
             }
 
-            http.Open("GET", url, true);
+            http.Open("GET", url, asynchron);
 
             http.Send();
 
@@ -147,7 +125,10 @@ var httpDownloader = (function () {
                 pkg.msg = status + ' ' + statusToHuman[status];
                 pkg.status = status;
 
-                writeHttpContent(data, pkg.fileName);
+                fs.writeFile(config.app.downloadDir + '\\' + pkg.fileName, data, function(err, data) {
+                    WScript.Echo(err);
+                })
+
 
             }
 
