@@ -1,0 +1,15 @@
+# OS junk files
+
+[Tt]humbs.db
+*
+.DS_Store
+
+*~
+
+
+
+
+downloads
+
+app.js
+test.js
