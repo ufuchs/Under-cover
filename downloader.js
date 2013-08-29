@@ -14,8 +14,8 @@ var httpDownloader = (function () {
 
     var VERSION = '0.1',
         http = new ActiveXObject("WinHttp.WinHttpRequest.5.1"),
-//        adodb = new ActiveXObject("ADODB.Stream"),
-        asynchron = true,
+        downloadDir = "",
+        msg = "",
         status = 0,
         statusToHuman = {
 
@@ -61,6 +61,24 @@ var httpDownloader = (function () {
             "505" : "HTTP Version Not Supported"
         };
 
+
+    //
+    //
+    //
+
+    function setDownloadDir(dir) {
+        downloadDir = dir;
+    }
+
+    //
+    //
+    //
+
+    function getMsg() {
+        return msg;
+    }
+
+
     //
     // http://msdn.microsoft.com/en-us/library/windows/desktop/aa384059(v=vs.85).aspx
     //
@@ -79,7 +97,7 @@ var httpDownloader = (function () {
                     proxy.bypassList);
             }
 
-            http.Open("GET", url, asynchron);
+            http.Open("GET", url, true);
 
             http.Send();
 
@@ -104,32 +122,50 @@ var httpDownloader = (function () {
     //
     //
 
-    function downloadPackage(pkg) {
+    function acquireStatus(err) {
 
-        WScript.Echo("Trying " + pkg.desc);
-        WScript.Echo("Trying " + pkg.uri);
+        msg = "";
 
-        httpRequest(pkg.uri, function (err, data) {
+        if (err !== null) {
 
-            var msg;
+            msg = "WinHTTP returned error: " + (err.number & 0xFFFF).toString() + "\n";
+            msg += err.description;
 
-            if (err !== null) {
+        } else {
 
-                msg = "WinHTTP returned error: " + (err.number & 0xFFFF).toString() + "\n";
-                msg += err.description;
-                pkg.msg = msg;
-                pkg.status = 303;
+            msg = status + ' ' + statusToHuman[status] + " --> ";
+
+        }
+
+    }
+
+    //
+    //
+    //
+
+    function downloadPackage(uri) {
+
+        var filename = utils.extractFilenameFromUri(uri);
+
+        if (downloadDir === undefined) {
+            throw new Error("property 'downloadDir' is undefined.");
+        }
+
+        httpRequest(uri, function (err, data) {
+
+            acquireStatus(err);
+
+            if (!err && status === 200) {
+
+                fs.writeFile(downloadDir + '\\' + filename, data, function (err, data) {
+
+                    if (!err) {
+                        msg += data + " Bytes written";
+                    }
+                });
 
             } else {
-
-                pkg.msg = status + ' ' + statusToHuman[status];
-                pkg.status = status;
-
-                fs.writeFile(config.app.downloadDir + '\\' + pkg.fileName, data, function(err, data) {
-                    WScript.Echo(err);
-                })
-
-
+                msg += "0 Bytes written";
             }
 
         });
@@ -143,6 +179,14 @@ var httpDownloader = (function () {
 
         downloadPackage : function (pkg) {
             return downloadPackage(pkg);
+        },
+
+        setDownloadDir : function (dir) {
+            setDownloadDir(dir);
+        },
+
+        getMsg : function () {
+            return getMsg();
         }
 
     };
@@ -166,8 +210,15 @@ var i,
         msg : ''            // installer msg
     };
 
-httpDownloader.downloadPackage(pkg);
-WScript.Echo(pkg.msg);
+WScript.Echo("Trying '" + pkg.desc + "'");
+WScript.Echo("Trying " + pkg.uri);
+
+
+
+
+httpDownloader.setDownloadDir(config.app.downloadDir);
+httpDownloader.downloadPackage(pkg.uri);
+WScript.Echo(httpDownloader.getMsg());
 
 /*
 toInstall = utils.getPackagesToInstall();

@@ -1,5 +1,6 @@
 /*global ActiveXObject:false*/
 /*global config:false*/
+/*jslint bitwise: true, plusplus: true */
 
 /*!
  * utils
@@ -8,9 +9,9 @@
  *
  */
 
-'use strict'
-
 var utils = (function () {
+
+    'use strict';
 
     //
     // Gets the architecture of the processor
@@ -28,11 +29,11 @@ var utils = (function () {
 
     //
     //
-    // @api : private
+    // @api : public
 
-    function extractPackageNameFromUrl(url) {
+    function extractFilenameFromUri(uri) {
 
-        var packageName = url.substr(url.lastIndexOf("/") + 1, url.length),
+        var packageName = uri.substr(uri.lastIndexOf("/") + 1, uri.length),
             pos = packageName.lastIndexOf("=") + 1;
 
         if (pos > 0) {
@@ -134,12 +135,7 @@ var utils = (function () {
                     // patch the filename with the version number
                     pkg.uri = applyVersion(content[uri], version);
 
-                    // name of the installer file (exe or zip)
-                    pkg.fileName = extractPackageNameFromUrl(pkg.uri);
-
                     pkg.desc = applyVersion(content.desc, version);
-
-
 
                 }
 
@@ -183,6 +179,10 @@ var utils = (function () {
 
         getPackagesToInstall : function () {
             return getPackagesToInstall();
+        },
+
+        extractFilenameFromUri : function (uri) {
+            return extractFilenameFromUri(uri);
         }
 
     };

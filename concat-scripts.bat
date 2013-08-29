@@ -1,4 +1,6 @@
 @echo off
 
-copy config.js /A + fs.js /A + utils.js /A + downloader.js /A app.js
+copy json2.js /B + fs.js /B fsEx.js
+
+copy config.js /B + fsEx.js /B + utils.js /B + downloader.js /B app.js
 

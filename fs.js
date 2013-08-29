@@ -7,11 +7,7 @@
  *
  */
 
-if (typeof fs !== 'object') {
-    fs = {};
-}
-
-(function () {
+var fs = (function () {
 
     'use strict';
 
@@ -22,7 +18,7 @@ if (typeof fs !== 'object') {
     //
     //
     //
-    fs.readFile = function (filename, callback) {
+    function readFile(filename, callback) {
 
         var data,
             size = 0;
@@ -48,30 +44,46 @@ if (typeof fs !== 'object') {
 
         return size;
 
-    };
+    }
 
     //
     //
     //
-    fs.writeFile = function (filename, data, callback) {
+    function writeFile(filename, data, callback) {
+
+        var size;
 
         try {
 
             adodb.Open();
             adodb.Type = 1;
             adodb.Write(data);
+
             adodb.Position = 0;
             adodb.SaveToFile(filename, 2);
 
         } catch (err) {
 
-            callback(err, null);
+            callback(err, 0);
 
         } finally {
 
+            size = adodb.Size;
             adodb.Close();
-            callback(null, null);
+            callback(null, size);
 
+        }
+
+    }
+
+    return {
+
+        readFile : function (filename, callback) {
+            return readFile(filename, callback);
+        },
+
+        writeFile : function (filename, data, callback) {
+            writeFile(filename, data, callback);
         }
 
     };

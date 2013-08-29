@@ -64,6 +64,7 @@ var config = {
         mbeddr : {
             version : "",
             deps : {
+
                 mps : {
                     version : "2.5.4",
                     deps : {
@@ -72,14 +73,25 @@ var config = {
                         }
                     }
                 },
-                cliTools : {
-                    graphviz : {
-                        version : "2.32"
-                    },
-                    cbmc : {
-                        version : "4-4"
+
+                mbeddr : {
+                    version : "",
+                    deps : {
+                        graphviz : {
+                            version : "2.32"
+                        },
+                        cbmc : {
+                            version : "4-4"
+                        },
+                        nusvm : {
+                            version : "2.5.4"
+                        },
+                        yices : {
+                            version : "1.0.39"
+                        }
                     }
                 }
+
             }
         }
 
@@ -100,6 +112,8 @@ var config = {
     packages : {
 
         ignore : ['mps', 'java', 'graphviz', 'cbmc', 'nusvm', 'yices', 'cygwin'],
+
+        // http://download.jetbrains.com/mps/30/MPS-3.0-RC3-129.302.zip
 
         mps : {
             uri :       "http://download.jetbrains.com/mps/MPS-{{version}}.zip",
