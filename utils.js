@@ -189,3 +189,33 @@ var utils = (function () {
 
 }());
 
+http://www.robvanderwoude.com/msiexec.php
+
+http://kb.winzip.com/kb/entry/229/
+
+Install
+---------
+
+Silent install
+msiexec /i winzipxxx.msi /qn
+
+Install to a WinZipXX folder
+msiexec /i winzipxxx.msi /qn INSTALLDIR="C:\Program Files\WinZipXX"
+
+No desktop shortcut, Start menu shortcut, Check for Updates, and Tip of the Day
+msiexec /i winzipxxx.msi /qn ADDDESKTOPICON=0 ADDSTARTMENU=0 INSTALLCMD="/noc4u /notip /autoinstall"
+
+Uninstall
+----------
+
+Uninstall silently
+msiexec /x winzipxxx.msi /qn
+Don't display the WinZip - Uninstall webpage
+msiexec /x winzipxxx.msi /qn SHOW_WEBPAGE=0
+
+Const msiUILevelNone = 2
+
+Set objInstaller = CreateObject("WindowsInstaller.Installer")
+objInstaller.UILevel = msiUILevelNone
+objInstaller.InstallProduct( "product.msi", "REMOVE=ALL")
+Set objInstaller = Nothing
