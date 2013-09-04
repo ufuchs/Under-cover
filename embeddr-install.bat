@@ -33,7 +33,6 @@ GOTO :MENU
     :: Check if node.js is installed
     IF NOT EXIST "%nodejsPath%\node.exe" (
         CALL :INSTALL_NODE
-
     )
 
     %nodejsPath%\node.exe %base%\install.js
@@ -52,6 +51,9 @@ GOTO :MENU
 
     CALL %base%\win7\nodejs-portable.bat unattended %nodejs_arch%
 
+    ECHO ^  Download and installation managed by 'nodejs-portable'
+    ECHO ^  Copyright(c) 2013 Cr@zy ^<webmaster@crazyws.fr^>
+
     ENDLOCAL
     GOTO :eof
 
@@ -61,9 +63,9 @@ GOTO :MENU
 
 :: CLS
 ECHO.
-ECHO embeddr-install v0.1
+<NUL (SET /P=Your system : ) 
+wmic os get Caption, OSArchitecture | findstr Bit
 ECHO.
-
 ECHO  1 - Install
 ECHO  2 - Exit
 ECHO.
@@ -86,3 +88,5 @@ GOTO MENU
 ::::::::::::::::::::::::::::::::::::::::
 
 ENDLOCAL
+
+:: java -version 2>&1 | findstr SE
