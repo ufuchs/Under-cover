@@ -9,20 +9,38 @@
 
 @ECHO OFF
 
-SETLOCAL EnableDelayedExpansion
+:: SETLOCAL EnableDelayedExpansion
 
 :: Batch vars (no edits necessary)
 SET base=%~dp0%
 SET nodejsPath=%base%node
 
+< NUL COPY /Y NUL bbb.txt > NUL
+FOR /F "tokens=*" %%a IN ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s ^| findstr /B ".*DisplayName"') DO ECHO %%a >> bbb.txt
+
 :: Aquire platform architecture. Gets 'AMD64' or 'x86'
 FOR /f "tokens=2* delims= " %%a IN ('reg query "HKLM\System\CurrentControlSet\Control\Session Manager\Environment" /v "PROCESSOR_ARCHITECTURE"') DO SET _arch_=%%b
+
+ECHO.
+CALL :WINDOWS_VERSION
 
 GOTO :MENU
 
 ::::::::::::::::::::::::::::::::::::::::
 :: SUB ROUTINES
 ::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::
+:WINDOWS_VERSION
+::::::::::::::::::::::::::::::::::::::::
+
+    SETLOCAL
+
+    ECHO [System - OS-Version]
+    FOR /F "tokens=*" %%a IN ('wmic os get Caption^, OSArchitecture ^| findstr /I bit') DO ECHO ^  %%a
+
+    ENDLOCAL
+    GOTO :eof
 
 ::::::::::::::::::::::::::::::::::::::::
 :INSTALL
@@ -58,22 +76,42 @@ GOTO :MENU
     GOTO :eof
 
 ::::::::::::::::::::::::::::::::::::::::
+:CHECK_FOR_INSTALLED_PACKAGES
+::::::::::::::::::::::::::::::::::::::::
+
+    SETLOCAL
+
+::    reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s | findstr /B ".*DisplayName" > installed-raw.txt
+::    reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s  > installed-raw.txt
+::    < NUL COPY /Y NUL installed-raw.txt > NUL
+::    FOR /F "tokens=*" %%a IN ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s ^| findstr /B ".*DisplayName"') DO ECHO %%a >> installed-raw.txt
+
+    < NUL COPY /Y NUL bbb.txt > NUL
+    FOR /F "tokens=*" %%a IN ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s ^| findstr /B ".*DisplayName"') DO ECHO %%a >> bbb.txt
+
+    < NUL COPY /Y NUL installed.txt > NUL
+    FOR /F "tokens=1,2* delims= " %%a IN ('TYPE installed-raw.txt') DO ECHO %%c >> installed.txt
+
+    ENDLOCAL
+    GOTO :eof
+
+::::::::::::::::::::::::::::::::::::::::
 :MENU
 ::::::::::::::::::::::::::::::::::::::::
 
 :: CLS
+
 ECHO.
-<NUL (SET /P=Your system : ) 
-wmic os get Caption, OSArchitecture | findstr Bit
-ECHO.
-ECHO  1 - Install
-ECHO  2 - Exit
+ECHO  1 - PreCheck
+ECHO  2 - Install
+ECHO  3 - Exit
 ECHO.
 SET /P nodejsTask=Choose a task:
 ECHO.
 
-IF %nodejsTask% == 1 CALL :INSTALL && GOTO TASK_DONE
-IF %nodejsTask% == 2 GOTO LEAVE
+IF %nodejsTask% == 1 CALL :CHECK_FOR_INSTALLED_PACKAGES && GOTO TASK_DONE
+IF %nodejsTask% == 2 CALL :INSTALL && GOTO TASK_DONE
+IF %nodejsTask% == 3 GOTO LEAVE
 
 ::::::::::::::::::::::::::::::::::::::::
 :TASK_DONE
