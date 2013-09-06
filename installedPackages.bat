@@ -1,6 +1,5 @@
 @ECHO OFF
 
-SET packages_wow6432node=packages-wow6432node.txt
 SET packages_arch=packages-arch.txt
 
 :: ONLY VALID for AMD64 systems and only exists on them.
@@ -23,7 +22,6 @@ GOTO :MAIN
 
     SETLOCAL
 
-    DEL %2 > NUL 2>&1
     FOR /F "tokens=1,2* delims= " %%a IN ('reg query %1 /s ^| findstr /B ".*DisplayName" ') DO (
         @ECHO %%c >> %2
     )
@@ -36,18 +34,39 @@ GOTO :MAIN
 
     SETLOCAL
 
-    CALL :GET_PACKAGES_BY_REGKEY %regKey_wow6432node% %packages_wow6432node%
+    CALL :GET_PACKAGES_BY_REGKEY %regKey_wow6432node% %packages_arch%
     CALL :GET_PACKAGES_BY_REGKEY %regKey_arch% %packages_arch%
 
     ENDLOCAL
     GOTO :eof
 
+:: Gets the installed packages on an X86 system
+:GET_PACKAGES_ON_X86
+
+    SETLOCAL
+
+    CALL :GET_PACKAGES_BY_REGKEY %regKey_arch% %packages_arch%
+
+    ENDLOCAL
+    GOTO :eof
+
+:: Gets the installed packages from a given architecture
+:: @param1 {architecture} - AMD64 or x86
+:GET_PACKAGES
+
+    SETLOCAL
+
+    DEL %packages_arch% > NUL 2>&1
+    CALL :GET_PACKAGES_ON_%1
+
+    ENDLOCAL
+    GOTO :eof
 
 ::::::::::::::::::::::::::::::::::::::::
 :MAIN
 ::::::::::::::::::::::::::::::::::::::::
 
-CALL :GET_PACKAGES_ON_AMD64
+CALL :GET_PACKAGES AMD64
 
 
 
