@@ -19,12 +19,14 @@ SET regKey_wow6432node=HKLM\Software\Wow6432Node\Microsoft\Windows\CurrentVersio
 :: - On AMD64 systems this key contains one and only the installed 64-bit
 ::   programs and _not_ the 32bit/x86 programs.
 :: - On x86 systems this key contains all installed programs.
-SET regKey_Arch=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+SET regKey_arch=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+
+
 
 GOTO :MAIN
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:: Gets the content from an given registry key and write it to the given file.
+:: Gets the content from a given registry key and write it to the given file.
 ::
 :: @param1 {regKey} String
 :: @param2 {filename} String
@@ -84,7 +86,13 @@ GOTO :MAIN
 :MAIN
 ::::::::::::::::::::::::::::::::::::::::
 
-CALL :GET_ALL_INSTALLED_PACKAGES AMD64
+::CALL :GET_ALL_INSTALLED_PACKAGES AMD64
+
+SET "packages=Java 7:JetBrains MPS:Node.js"
+
+FOR %%S IN ("%packages::=" "%") DO (
+    ECHO %%~S
+)
 
 ENDLOCAL
 
