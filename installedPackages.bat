@@ -21,8 +21,6 @@ SET regKey_wow6432node=HKLM\Software\Wow6432Node\Microsoft\Windows\CurrentVersio
 :: - On x86 systems this key contains all installed programs.
 SET regKey_arch=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
 
-
-
 GOTO :MAIN
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -35,7 +33,8 @@ GOTO :MAIN
 
     :: drop the fields at position 1 and 2
     FOR /F "tokens=1,2* delims= " %%a IN ('reg query %1 /s ^| findstr /B ".*DisplayName" ') DO (
-        @ECHO %%c >> %2
+        :: Be aware! A space between '%%c >>' writes an extra space in the output file.
+        ECHO %%c>> %2
     )
 
     GOTO :eof
@@ -77,7 +76,8 @@ GOTO :MAIN
 
     :: drop Microsoft/Intel related packages
     FOR /F "tokens=*" %%a IN ('type %packages_arch% ^| findstr /V "Intel" ^| findstr /V "Microsoft" ^| findstr /V "C++" ^| findstr /V "SQL" ^| findstr /V "@"' ) DO (
-        @ECHO %%a >> %packages_by_user%
+        :: Be aware! A space between '%%a >>' writes an extra space in the output file.
+        ECHO %%a>> %packages_by_user%
     )
 
     GOTO :eof
@@ -86,12 +86,20 @@ GOTO :MAIN
 :MAIN
 ::::::::::::::::::::::::::::::::::::::::
 
-::CALL :GET_ALL_INSTALLED_PACKAGES AMD64
+CALL :GET_ALL_INSTALLED_PACKAGES AMD64
 
-SET "packages=Java 7:JetBrains MPS:Node.js"
+GOTO :EOF
 
-FOR %%S IN ("%packages::=" "%") DO (
-    ECHO %%~S
+SET "packages=Java 7:JetBrains MPS 3.0:Node.js"
+
+SETLOCAL enableDelayedExpansion
+
+FOR /F "tokens=*" %%a IN ('type %packages_by_user%') DO (
+    SET line=%%a
+    FOR %%S IN ("%packages::=" "%") DO (
+        SET package=%%~S
+        ECHO !line! | findstr /B "!package!"
+    )
 )
 
 ENDLOCAL
