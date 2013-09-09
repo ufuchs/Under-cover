@@ -19,8 +19,27 @@ for /f "eol=: delims=" %%S in ("!str!") do (
 :: http://stackoverflow.com/questions/3068929/how-to-read-file-contents-into-a-variable-in-a-batch-file
 SETLOCAL EnableDelayedExpansion
 
-set Build=
-for /f "Tokens=* Delims=" %%x in ('type packages-by-user.txt') do set Build=!Build!%%x:
+SET poi=
+SET first=0
+FOR /f "Delims=" %%x IN ('type packagesOfInterest.txt') DO (
+    IF !first! == 0 (
+      SET first=1
+      SET poi=%%x
+    ) ELSE (
+      SET poi=!poi!:%%x
+    )
+)
 
-echo %Build%
+ECHO %poi%
+
+goto :eof
+
+SET "str=%pkgOfInterest%"
+SET ^"str=!str::=^
+
+!"
+FOR /f "eol=: delims=" %%S IN ("!str!") DO (
+  IF "!!"=="" ENDLOCAL
+  echo %%S
+)
 

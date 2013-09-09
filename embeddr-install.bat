@@ -81,16 +81,6 @@ GOTO :MENU
 
     SETLOCAL
 
-::    reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s | findstr /B ".*DisplayName" > installed-raw.txt
-::    reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s  > installed-raw.txt
-::    < NUL COPY /Y NUL installed-raw.txt > NUL
-::    FOR /F "tokens=*" %%a IN ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s ^| findstr /B ".*DisplayName"') DO ECHO %%a >> installed-raw.txt
-
-    < NUL COPY /Y NUL bbb.txt > NUL
-    FOR /F "tokens=*" %%a IN ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s ^| findstr /B ".*DisplayName"') DO ECHO %%a >> bbb.txt
-
-    < NUL COPY /Y NUL installed.txt > NUL
-    FOR /F "tokens=1,2* delims= " %%a IN ('TYPE installed-raw.txt') DO ECHO %%c >> installed.txt
 
     ENDLOCAL
     GOTO :eof
