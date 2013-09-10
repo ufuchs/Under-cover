@@ -10,7 +10,7 @@ SETLOCAL
 
 SET platform_arch=
 SET software_all=software-all.txt
-SET software_in_scope=software-by-user.txt
+SET software_in_scope=software-in-scope.txt
 SET software_to_search=software-to-search.txt
 
 :: ONLY VALID for AMD64 systems and only exists on them.
@@ -93,11 +93,10 @@ GOTO :MAIN
     :: drop duplicates
     SET line=
     SET prevLine=
-    FOR /f "tokens=* delims=" %%x IN ('type %software_all%') DO (
-        SET line=%%x
-        IF !line! NEQ !prevLine! (
-          ECHO !line!>> temp.txt
-          SET prevLine=!line!
+    FOR /f "tokens=* delims=" %%_ IN ('type %software_all%') DO (
+        IF %%_ NEQ !prevLine! (
+          ECHO %%_>> temp.txt
+          SET prevLine=%%_
         )
     )
 
@@ -118,14 +117,14 @@ GOTO :MAIN
 
     SETLOCAL
 
-    FOR /F "tokens=*" %%a IN ('type %software_all% ^
+    FOR /F "tokens=*" %%_ IN ('type %software_all% ^
         ^| findstr /V "Intel" ^
         ^| findstr /V "Microsoft"
         ^| findstr /V "C++" ^
         ^| findstr /V "SQL" ^
-        ^| findstr /V "@"' ) DO (
+        ^| findstr /V "@" ' ) DO (
         :: A space between '%%c >>' writes an extra space at line end
-        ECHO %%a>> %software_in_scope%
+        ECHO %%_>> %software_in_scope%
     )
 
     ENDLOCAL
@@ -167,21 +166,21 @@ SETLOCAL enableDelayedExpansion
 :: reads the %software_to_search% file and lines up the items separated by ':'
 SET sts=
 SET first=0
-FOR /f "Delims=" %%x IN ('type %software_to_search%') DO (
+FOR /f "Delims=" %%_ IN ('type %software_to_search%') DO (
     IF !first! == 0 (
       SET first=1
-      SET sts=%%x
+      SET sts=%%_
     ) ELSE (
-      SET sts=!sts!:%%x
+      SET sts=!sts!:%%_
     )
 )
 
 :: look up for the software to search
 SET "sp=%sts%"
-FOR /F "tokens=*" %%a IN ('type %software_in_scope%') DO (
+FOR /F "tokens=*" %%_ IN ('type %software_in_scope%') DO (
     :: iterates over the software names in the search string for each installed software package
     FOR %%S IN ("%sp::=" "%") DO (
-        ECHO %%a | findstr /B "%%~S"
+        ECHO %%_ | findstr /B "%%~S"
     )
 )
 
