@@ -24,6 +24,10 @@ SET regKey_arch=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
 
 GOTO :MAIN
 
+::
+:: SUBROUTINES
+::
+
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Gets the content from a given registry key and write it to the given file.
 ::
@@ -32,9 +36,10 @@ GOTO :MAIN
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :GET_SOFTWARE_BY_REGKEY
 
-    :: drop the fields at position 1 and 2
-    FOR /F "tokens=1,2* delims= " %%a IN ('reg query %1 /s ^| findstr /B ".*DisplayName" ') DO (
-        :: Be aware! A space between '%%c >>' writes an extra space at the end of each line.
+    :: drop the unnecessary fields at position 1 and 2
+    FOR /F "tokens=1,2* delims= " %%a IN ('reg query %1 /s ^
+        ^| findstr /B ".*DisplayName" ') DO (
+        :: A space between '%%c >>' writes an extra space at line end
         ECHO %%c>> %2
     )
 
@@ -69,34 +74,59 @@ GOTO :MAIN
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :GET_SOFTWARE_BY_USER
 
+    SETLOCAL enableDelayedExpansion
+
     :: tidy up
     DEL %software_all% > NUL 2>&1
     DEL %software_by_user% > NUL 2>&1
+    DEL temp.txt > NUL 2>&1
 
     CALL :GET_SOFTWARE_ON_%1
 
     SORT %software_all% /o %software_all%
 
+    :: drop duplicates
+    SET line=
+    SET prevLine=
+    FOR /f "tokens=* delims=" %%x IN ('type %software_all%') DO (
+        SET line=%%x
+        IF !line! NEQ !prevLine! (
+          ECHO !line!>> temp.txt
+          SET prevLine=!line!
+        )
+    )
+    COPY /V /Y temp.txt %software_all% > NUL 2>&1
+
     :: drop Microsoft/Intel related packages
-    FOR /F "tokens=*" %%a IN ('type %software_all% ^| findstr /V "Intel" ^| findstr /V "Microsoft" ^| findstr /V "C++" ^| findstr /V "SQL" ^| findstr /V "@"' ) DO (
-        :: Be aware! A space between '%%c >>' writes an extra space at the end of each line.
+    FOR /F "tokens=*" %%a IN ('type %software_all% ^
+        ^| findstr /V "Intel" ^
+        ^| findstr /V "Microsoft"
+        ^| findstr /V "C++" ^
+        ^| findstr /V "SQL" ^
+        ^| findstr /V "@"' ) DO (
+        :: A space between '%%c >>' writes an extra space at line end
         ECHO %%a>> %software_by_user%
     )
 
+    ENDLOCAL
     GOTO :eof
 
 ::::::::::::::::::::::::::::::::::::::::
 :MAIN
 ::::::::::::::::::::::::::::::::::::::::
 
-:: Aquire platform architecture. Gets 'AMD64' or 'x86'
-FOR /f "tokens=2* delims= " %%a IN ('reg query "HKLM\System\CurrentControlSet\Control\Session Manager\Environment" /v "PROCESSOR_ARCHITECTURE"') DO SET arch=%%b
+:: Aquire the platform architecture. Gets 'AMD64' or 'x86'
+FOR /f "tokens=2* delims= " %%a IN ('reg query ^
+    "HKLM\System\CurrentControlSet\Control\Session Manager\Environment" ^
+    /v ^
+    "PROCESSOR_ARCHITECTURE"') DO SET arch=%%b
 
+:: Fetch the installed software
 CALL :GET_SOFTWARE_BY_USER %arch%
 
 SETLOCAL enableDelayedExpansion
 
-:: reads the %software_to_search% file and builds up an search string
+:: reads the %software_to_search% file and lines up the items separated by ':'
 SET sts=
 SET first=0
 FOR /f "Delims=" %%x IN ('type %software_to_search%') DO (
@@ -111,7 +141,7 @@ FOR /f "Delims=" %%x IN ('type %software_to_search%') DO (
 :: look up for the software to search
 SET "sp=%sts%"
 FOR /F "tokens=*" %%a IN ('type %software_by_user%') DO (
-    :: iterates for each installed software package over the software names in the search string
+    :: iterates over the software names in the search string for each installed software package
     FOR %%S IN ("%sp::=" "%") DO (
         ECHO %%a | findstr /B "%%~S"
     )

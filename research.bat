@@ -20,15 +20,18 @@ for /f "eol=: delims=" %%S in ("!str!") do (
 SETLOCAL EnableDelayedExpansion
 
 SET poi=
-SET first=0
+SET line=
+SET prevLine=
 FOR /f "Delims=" %%x IN ('type packagesOfInterest.txt') DO (
-    IF !first! == 0 (
-      SET first=1
-      SET poi=%%x
-    ) ELSE (
-      SET poi=!poi!:%%x
+    SET line=%%x
+    IF !line! NEQ !prevLine! (
+      ECHO !line!>>
+      SET prevLine=!line!
     )
 )
+COPY /V /Y temp.txt
+DEL temp.txt
+
 
 ECHO %poi%
 
