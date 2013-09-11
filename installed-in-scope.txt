@@ -1,0 +1,21 @@
+Adobe Flash Player 11 Plugin
+Adobe Reader XI (11.0.04)
+avast Free Antivirus
+ElsterFormular
+Ext2Fsd 0.51
+Git version 1.8.3-preview20130601
+Google Chrome
+Google Update Helper
+Java 7 Update 25 (64-bit)
+JetBrains MPS 3.0
+Launchy 2.5
+Mozilla Firefox 23.0.1 (x86 de)
+Mozilla Maintenance Service
+Node.js
+Sublime Text 2.0.2
+Tera Term 4.78
+tools-linux
+Total Commander 64-bit (Remove or Repair)
+Windows Driver Package - Silicon Laboratories (silabenm) Ports  (12/10/2012 6.6.1.0)
+WinPcap 4.1.3
+Wireshark 1.10.1 (64-bit)

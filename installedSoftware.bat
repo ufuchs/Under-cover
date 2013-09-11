@@ -181,8 +181,12 @@ ___EPOCS_FO_TUO___
         IF !$! EQU 1 (
             ECHO(%%_>> %exclude_from_scope_script%
             FOR /F "tokens=*" %%# IN ('type %exclude_from_scope%.txt') DO (
-                SET "line=    ^| findstr /V "%%#" ^"
-                ECHO !line!>> %exclude_from_scope_script%
+                SET x=%%#
+                SET y=!x:~0,2%!
+                IF !y! NEQ :: (
+                    SET "line=    ^| findstr /V "%%#" ^"
+                    ECHO !line!>> %exclude_from_scope_script%
+                )
             )
             SET $=2
         )

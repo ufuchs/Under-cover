@@ -1,0 +1,47 @@
+@C:\Program Files (x86)\Intel\Intel Control Center\Uninstaller\SetupICC.exe,-100
+@C:\Program Files (x86)\Intel\Intel(R) Graphics Media Accelerator Driver\Uninstall\Setup.exe,-1166
+Adobe Flash Player 11 Plugin
+Adobe Reader XI (11.0.04)
+avast Free Antivirus
+ElsterFormular
+Ext2Fsd 0.51
+Git version 1.8.3-preview20130601
+Google Chrome
+Google Update Helper
+Intel(R) Control Center
+Intel(R) Graphics Media Accelerator Driver
+Java 7 Update 25 (64-bit)
+JetBrains MPS 3.0
+Launchy 2.5
+Microsoft .NET Framework 4 Client Profile
+Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729.4148
+Microsoft Visual C++ 2008 Redistributable - x86 9.0.30729.4148
+Microsoft Visual C++ 2008 Redistributable - x86 9.0.30729.6161
+Microsoft Visual C++ 2010  x64 Redistributable - 10.0.40219
+Mozilla Firefox 23.0.1 (x86 de)
+Mozilla Maintenance Service
+Node.js
+Realtek High Definition Audio Driver
+Security Update for Microsoft .NET Framework 4 Client Profile (KB2604121)
+Security Update for Microsoft .NET Framework 4 Client Profile (KB2656351)
+Security Update for Microsoft .NET Framework 4 Client Profile (KB2729449)
+Security Update for Microsoft .NET Framework 4 Client Profile (KB2737019)
+Security Update for Microsoft .NET Framework 4 Client Profile (KB2742595)
+Security Update for Microsoft .NET Framework 4 Client Profile (KB2789642)
+Security Update for Microsoft .NET Framework 4 Client Profile (KB2804576)
+Security Update for Microsoft .NET Framework 4 Client Profile (KB2835393)
+Security Update for Microsoft .NET Framework 4 Client Profile (KB2840628)
+Security Update for Microsoft .NET Framework 4 Client Profile (KB2840628v2)
+Sublime Text 2.0.2
+Tera Term 4.78
+tools-linux
+Total Commander 64-bit (Remove or Repair)
+Update for Microsoft .NET Framework 4 Client Profile (KB2468871)
+Update for Microsoft .NET Framework 4 Client Profile (KB2533523)
+Update for Microsoft .NET Framework 4 Client Profile (KB2600217)
+Update for Microsoft .NET Framework 4 Client Profile (KB2836939)
+VMware Player
+VMwarePlayer_x64
+Windows Driver Package - Silicon Laboratories (silabenm) Ports  (12/10/2012 6.6.1.0)
+WinPcap 4.1.3
+Wireshark 1.10.1 (64-bit)
