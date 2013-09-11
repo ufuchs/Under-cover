@@ -157,7 +157,9 @@ ___EPOCS_FO_TUO___
 
     DEL %exclude_from_scope_script% > NUL 2>&1
 
+    ::
     :: Write preample
+    ::
     ECHO ^@ECHO OFF>> %exclude_from_scope_script%
     ECHO(>> %exclude_from_scope_script%
     ECHO ::>> %exclude_from_scope_script%
@@ -167,10 +169,12 @@ ___EPOCS_FO_TUO___
     ECHO ::>> %exclude_from_scope_script%
     ECHO(>> %exclude_from_scope_script%
 
+    ::
     :: Write script code
+    ::
     FOR /f "useback delims=" %%_ IN (%1) do (
         IF "%%_" EQU "___EPOCS_FO_TUO___" (
-            :: the end
+            :: leave the subroutine
             SET $=
             ENDLOCAL
             GOTO :eof
@@ -183,6 +187,7 @@ ___EPOCS_FO_TUO___
             FOR /F "tokens=*" %%# IN ('type %exclude_from_scope%.txt') DO (
                 SET x=%%#
                 SET y=!x:~0,2%!
+                :: exclude comments
                 IF !y! NEQ :: (
                     SET "line=    ^| findstr /V "%%#" ^"
                     ECHO !line!>> %exclude_from_scope_script%
