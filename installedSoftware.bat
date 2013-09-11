@@ -9,10 +9,18 @@
 SETLOCAL
 
 SET platform_arch=
-SET software_all=software-all.txt
-SET software_in_scope=software-in-scope.txt
+
+SET installed_full_house=installed-full-house.txt
+
+SET installed_in_scope=installed-in-scope.txt
+
 SET software_to_search=software-to-search.txt
-SET exclude_from_scope=exclude_from_scope.bat
+
+SET installed_exclude_from_scope=installed-exclude-from-scope.txt
+
+SET exclude_from_scope=exclude-from-scope
+
+SET exclude_from_scope_script=%exclude_from_scope%.bat
 
 :: ONLY VALID for AMD64 systems and only exists on them.
 :: Contains all installed 32-bit packages on an AMD64 system.
@@ -32,7 +40,7 @@ GOTO :MAIN
 
 ___OUT_OF_SCOPE___
 FOR /F "tokens=*" %%_ IN ('type %1 ^
-    ) DO (
+    ') DO (
     ECHO %%_>> %2
 )
 ___EPOCS_FO_TUO___
@@ -40,6 +48,21 @@ ___EPOCS_FO_TUO___
 ::
 :: SUBROUTINES
 ::
+
+::::::::::::::::::::::::::::::::::::::::
+:WINDOWS_VERSION
+::::::::::::::::::::::::::::::::::::::::
+
+    SETLOCAL
+
+::    ECHO [System - OS-Version]
+    ECHO(
+    FOR /F "tokens=*" %%_ IN ('wmic os get Caption^, OSArchitecture ^
+        ^| findstr /I bit') DO ECHO ^  %%_
+
+    ENDLOCAL
+
+    GOTO :eof
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Aquire the platform architecture. Gets 'AMD64' or 'x86'
@@ -76,7 +99,7 @@ ___EPOCS_FO_TUO___
 :GET_ALL_SOFTWARE_PACKAGES_FOR_x86
 
     :: x86(32-bit) packages
-    CALL :GET_SOFTWARE_BY_REGKEY %regKey_arch% %software_all%
+    CALL :GET_SOFTWARE_BY_REGKEY %regKey_arch% %installed_full_house%
 
     GOTO :eof
 
@@ -86,10 +109,10 @@ ___EPOCS_FO_TUO___
 :GET_ALL_SOFTWARE_PACKAGES_FOR_AMD64
 
     :: x86(32-bit) packages
-    CALL :GET_SOFTWARE_BY_REGKEY %regKey_wow6432node% %software_all%
+    CALL :GET_SOFTWARE_BY_REGKEY %regKey_wow6432node% %installed_full_house%
 
     :: AMD64(64-bit) packages
-    CALL :GET_SOFTWARE_BY_REGKEY %regKey_arch% %software_all%
+    CALL :GET_SOFTWARE_BY_REGKEY %regKey_arch% %installed_full_house%
 
     GOTO :eof
 
@@ -100,19 +123,19 @@ ___EPOCS_FO_TUO___
 
     SETLOCAL enableDelayedExpansion
 
-    SORT %software_all% /o %software_all%
+    SORT %installed_full_house% /o %installed_full_house%
 
     :: drop duplicates
     SET line=
     SET prevLine=
-    FOR /f "tokens=* delims=" %%_ IN ('type %software_all%') DO (
+    FOR /f "tokens=* delims=" %%_ IN ('type %installed_full_house%') DO (
         IF %%_ NEQ !prevLine! (
           ECHO %%_>> temp.txt
           SET prevLine=%%_
         )
     )
 
-    COPY /V /Y temp.txt %software_all% > NUL 2>&1
+    COPY /V /Y temp.txt %installed_full_house% > NUL 2>&1
 
     DEL temp.txt
 
@@ -121,28 +144,28 @@ ___EPOCS_FO_TUO___
     GOTO :eof
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-::
+:: Builds a script which removes unwished packages from %installed_full_house%
+:: It can be configured by 'exclude-from-scope.txt'
 ::
 :: @param1 {scriptname} String
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:CREATE_EXCLUDE_FROM_SCOPE_SCRIPT
+:CREATE_SCRIPT_EXCLUDE_FROM_SCOPE_SCRIPT
 
     SETLOCAL EnableDelayedExpansion
 
-    SET software_out_of_scope=software-out-of-scope.txt
     SET line=
 
-    DEL %exclude_from_scope% > NUL 2>&1
+    DEL %exclude_from_scope_script% > NUL 2>&1
 
     :: Write preample
-    ECHO ^@ECHO OFF>> %exclude_from_scope%
-    ECHO(>> %exclude_from_scope%
-    ECHO ::>> %exclude_from_scope%
-    ECHO :: Don't edit this file.>> %exclude_from_scope%
-    ECHO :: It will overwritten by the next run.>> %exclude_from_scope%
-    ECHO :: Any changes should be made in '%software_out_of_scope%'.>> %exclude_from_scope%
-    ECHO ::>> %exclude_from_scope%
-    ECHO(>> %exclude_from_scope%
+    ECHO ^@ECHO OFF>> %exclude_from_scope_script%
+    ECHO(>> %exclude_from_scope_script%
+    ECHO ::>> %exclude_from_scope_script%
+    ECHO :: Don't edit this file.>> %exclude_from_scope_script%
+    ECHO :: It will overwritten by the next run.>> %exclude_from_scope_script%
+    ECHO :: Any changes should be made in '%installed_exclude_from_scope%'.>> %exclude_from_scope_script%
+    ECHO ::>> %exclude_from_scope_script%
+    ECHO(>> %exclude_from_scope_script%
 
     :: Write script code
     FOR /f "useback delims=" %%_ IN (%1) do (
@@ -153,13 +176,13 @@ ___EPOCS_FO_TUO___
             GOTO :eof
         )
         IF !$! EQU 2 (
-            ECHO(%%_>> %exclude_from_scope%
+            ECHO(%%_>> %exclude_from_scope_script%
         )
         IF !$! EQU 1 (
-            ECHO(%%_>> %exclude_from_scope%
-            FOR /F "tokens=*" %%# IN ('type %software_out_of_scope%') DO (
+            ECHO(%%_>> %exclude_from_scope_script%
+            FOR /F "tokens=*" %%# IN ('type %exclude_from_scope%.txt') DO (
                 SET "line=    ^| findstr /V "%%#" ^"
-                ECHO !line!>> %exclude_from_scope%
+                ECHO !line!>> %exclude_from_scope_script%
             )
             SET $=2
         )
@@ -176,21 +199,15 @@ ___EPOCS_FO_TUO___
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: To increase the performance, all software entries out of scope/interest
 :: should be removed.
-:: The output is written into %software_in_scope%
+:: The output is written into %installed_in_scope%
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:EXCLUDE_SOFTWARE_OUT_OF_SCOPE
+:EXCLUDE_FROM_SCOPE
 
     SETLOCAL
 
-    FOR /F "tokens=*" %%_ IN ('type %software_all% ^
-        ^| findstr /V "Intel" ^
-        ^| findstr /V "Microsoft"
-        ^| findstr /V "C++" ^
-        ^| findstr /V "SQL" ^
-        ^| findstr /V "@" ' ) DO (
-        :: A space between '%%c >>' writes an extra space at line end
-        ECHO %%_>> %software_in_scope%
-    )
+    CALL %exclude_from_scope_script% ^
+        %installed_full_house% ^
+        %installed_in_scope%
 
     ENDLOCAL
 
@@ -199,13 +216,13 @@ ___EPOCS_FO_TUO___
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Gets the software packages which should be scanned.
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:GET_SOFTWARE_IN_SCOPE
+:GET_installed_in_scope
 
     SETLOCAL enableDelayedExpansion
 
     :: delete files from last run
-    DEL %software_all% > NUL 2>&1
-    DEL %software_in_scope% > NUL 2>&1
+    DEL %installed_full_house% > NUL 2>&1
+    DEL %installed_in_scope% > NUL 2>&1
 
     CALL :GET_PLATFORM_ARCHITECTURE
 
@@ -213,7 +230,7 @@ ___EPOCS_FO_TUO___
 
     CALL :REMOVE_DUPLICATE_ENTRIES
 
-    CALL :EXCLUDE_SOFTWARE_OUT_OF_SCOPE
+    CALL :EXCLUDE_FROM_SCOPE
 
     ENDLOCAL
 
@@ -225,15 +242,17 @@ ___EPOCS_FO_TUO___
 
 SETLOCAL enableDelayedExpansion
 
+::CALL :WINDOWS_VERSION
+
 ECHO(
 ECHO ^  Aquire installed software from registry.
 ECHO ^  This may take a while...
 ECHO(
 
-CALL :CREATE_EXCLUDE_FROM_SCOPE_SCRIPT %0
+CALL :CREATE_SCRIPT_EXCLUDE_FROM_SCOPE_SCRIPT %0
 
 :: Fetch the installed software
-CALL :GET_SOFTWARE_IN_SCOPE
+CALL :GET_installed_in_scope
 
 :: reads the %software_to_search% file and lines up the items separated by ':'
 SET sts=
@@ -254,11 +273,13 @@ ECHO(
 
 :: look up for the software to search
 SET "sp=%sts%"
-FOR /F "tokens=*" %%_ IN ('type %software_in_scope%') DO (
+FOR /F "tokens=*" %%_ IN ('type %installed_in_scope%') DO (
     :: iterates over the software names in the search string for each installed software package
-    FOR %%S IN ("%sp::=" "%") DO (
-        ECHO %%_ | findstr /B "%%~S"
+    FOR %%# IN ("%sp::=" "%") DO (
+        ECHO %%_ | findstr /B %%#
     )
 )
+
+::type test.txt
 
 ENDLOCAL
