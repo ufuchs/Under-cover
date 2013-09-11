@@ -12,6 +12,7 @@ SET platform_arch=
 SET software_all=software-all.txt
 SET software_in_scope=software-in-scope.txt
 SET software_to_search=software-to-search.txt
+SET exclude_from_scope=exclude_from_scope.bat
 
 :: ONLY VALID for AMD64 systems and only exists on them.
 :: Contains all installed 32-bit packages on an AMD64 system.
@@ -24,6 +25,17 @@ SET regKey_wow6432node=HKLM\Software\Wow6432Node\Microsoft\Windows\CurrentVersio
 SET regKey_arch=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
 
 GOTO :MAIN
+
+::
+:: DATA SECTION
+::
+
+___OUT_OF_SCOPE___
+FOR /F "tokens=*" %%_ IN ('type %1 ^
+    ) DO (
+    ECHO %%_>> %2
+)
+___EPOCS_FO_TUO___
 
 ::
 :: SUBROUTINES
@@ -109,6 +121,59 @@ GOTO :MAIN
     GOTO :eof
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::
+::
+:: @param1 {scriptname} String
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:CREATE_EXCLUDE_FROM_SCOPE_SCRIPT
+
+    SETLOCAL EnableDelayedExpansion
+
+    SET software_out_of_scope=software-out-of-scope.txt
+    SET line=
+
+    DEL %exclude_from_scope% > NUL 2>&1
+
+    :: Write preample
+    ECHO ^@ECHO OFF>> %exclude_from_scope%
+    ECHO(>> %exclude_from_scope%
+    ECHO ::>> %exclude_from_scope%
+    ECHO :: Don't edit this file.>> %exclude_from_scope%
+    ECHO :: It will overwritten by the next run.>> %exclude_from_scope%
+    ECHO :: Any changes should be made in '%software_out_of_scope%'.>> %exclude_from_scope%
+    ECHO ::>> %exclude_from_scope%
+    ECHO(>> %exclude_from_scope%
+
+    :: Write script code
+    FOR /f "useback delims=" %%_ IN (%1) do (
+        IF "%%_" EQU "___EPOCS_FO_TUO___" (
+            :: the end
+            SET $=
+            ENDLOCAL
+            GOTO :eof
+        )
+        IF !$! EQU 2 (
+            ECHO(%%_>> %exclude_from_scope%
+        )
+        IF !$! EQU 1 (
+            ECHO(%%_>> %exclude_from_scope%
+            FOR /F "tokens=*" %%# IN ('type %software_out_of_scope%') DO (
+                SET "line=    ^| findstr /V "%%#" ^"
+                ECHO !line!>> %exclude_from_scope%
+            )
+            SET $=2
+        )
+        IF "%%_" EQU "___OUT_OF_SCOPE___" (
+            :: now read the content of the __DATA__ section
+            SET $=1
+        )
+    )
+
+    ENDLOCAL
+
+    GOTO :eof
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: To increase the performance, all software entries out of scope/interest
 :: should be removed.
 :: The output is written into %software_in_scope%
@@ -158,10 +223,17 @@ GOTO :MAIN
 :MAIN
 ::::::::::::::::::::::::::::::::::::::::
 
+SETLOCAL enableDelayedExpansion
+
+ECHO(
+ECHO ^  Aquire installed software from registry.
+ECHO ^  This may take a while...
+ECHO(
+
+CALL :CREATE_EXCLUDE_FROM_SCOPE_SCRIPT %0
+
 :: Fetch the installed software
 CALL :GET_SOFTWARE_IN_SCOPE
-
-SETLOCAL enableDelayedExpansion
 
 :: reads the %software_to_search% file and lines up the items separated by ':'
 SET sts=
@@ -174,6 +246,11 @@ FOR /f "Delims=" %%_ IN ('type %software_to_search%') DO (
       SET sts=!sts!:%%_
     )
 )
+
+ECHO(
+ECHO ^  Following software is installed:
+ECHO ^  ================================
+ECHO(
 
 :: look up for the software to search
 SET "sp=%sts%"
