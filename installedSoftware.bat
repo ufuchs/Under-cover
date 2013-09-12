@@ -38,12 +38,20 @@ GOTO :MAIN
 :: DATA SECTION
 ::
 
-___OUT_OF_SCOPE___
+__OUT_OF_SCOPE__
+@ECHO OFF
+
+::
+:: Don't edit this file.
+:: It will overwritten by the next run.
+:: Any changes should be made in 'exclude_from_scope.txt'.
+::
+
 FOR /F "tokens=*" %%_ IN ('type %1 ^
     ') DO (
     ECHO %%_>> %2
 )
-___EPOCS_FO_TUO___
+__EPOCS_FO_TUO__
 
 ::
 :: SUBROUTINES
@@ -55,7 +63,7 @@ ___EPOCS_FO_TUO___
 
     SETLOCAL
 
-::    ECHO [System - OS-Version]
+    ECHO [System - OS-Version]
     ECHO(
     FOR /F "tokens=*" %%_ IN ('wmic os get Caption^, OSArchitecture ^
         ^| findstr /I bit') DO ECHO ^  %%_
@@ -158,32 +166,18 @@ ___EPOCS_FO_TUO___
     DEL %exclude_from_scope_script% > NUL 2>&1
 
     ::
-    :: Write preample
-    ::
-    ECHO ^@ECHO OFF>> %exclude_from_scope_script%
-    ECHO(>> %exclude_from_scope_script%
-    ECHO ::>> %exclude_from_scope_script%
-    ECHO :: Don't edit this file.>> %exclude_from_scope_script%
-    ECHO :: It will overwritten by the next run.>> %exclude_from_scope_script%
-    ECHO :: Any changes should be made in '%installed_exclude_from_scope%'.>> %exclude_from_scope_script%
-    ECHO ::>> %exclude_from_scope_script%
-    ECHO(>> %exclude_from_scope_script%
-
-    ::
-    :: Write script code
+    :: Write the script code
     ::
     FOR /f "useback delims=" %%_ IN (%1) do (
-        IF "%%_" EQU "___EPOCS_FO_TUO___" (
+        IF "%%_" EQU "__EPOCS_FO_TUO__" (
             :: leave the subroutine
             SET $=
             ENDLOCAL
             GOTO :eof
         )
-        IF !$! EQU 2 (
+        IF !$! EQU 3 (
             ECHO(%%_>> %exclude_from_scope_script%
-        )
-        IF !$! EQU 1 (
-            ECHO(%%_>> %exclude_from_scope_script%
+        ) ELSE IF !$! EQU 2 (
             FOR /F "tokens=*" %%# IN ('type %exclude_from_scope%.txt') DO (
                 SET x=%%#
                 SET y=!x:~0,2%!
@@ -193,10 +187,17 @@ ___EPOCS_FO_TUO___
                     ECHO !line!>> %exclude_from_scope_script%
                 )
             )
-            SET $=2
-        )
-        IF "%%_" EQU "___OUT_OF_SCOPE___" (
-            :: now read the content of the __DATA__ section
+            ECHO %%_>> %exclude_from_scope_script%
+            SET $=3
+        ) ELSE IF !$! EQU 1 (
+            :: write header comments
+            SET x=%%_
+            SET y=!x:~0,3%!
+            ECHO %%_>> %exclude_from_scope_script%
+            IF !y! EQU FOR (
+                SET $=2
+            )
+        ) ELSE IF "%%_" EQU "__OUT_OF_SCOPE__" (
             SET $=1
         )
     )
@@ -225,7 +226,7 @@ ___EPOCS_FO_TUO___
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Gets the software packages which should be scanned.
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:GET_installed_in_scope
+:GET_INSTALLED_SOFTWARE
 
     SETLOCAL enableDelayedExpansion
 
@@ -251,7 +252,7 @@ ___EPOCS_FO_TUO___
 
 SETLOCAL enableDelayedExpansion
 
-::CALL :WINDOWS_VERSION
+CALL :WINDOWS_VERSION
 
 ECHO(
 ECHO ^  Aquire installed software from registry.
@@ -261,7 +262,7 @@ ECHO(
 CALL :CREATE_SCRIPT_EXCLUDE_FROM_SCOPE_SCRIPT %0
 
 :: Fetch the installed software
-CALL :GET_installed_in_scope
+CALL :GET_INSTALLED_SOFTWARE
 
 :: reads the %software_to_search% file and lines up the items separated by ':'
 SET sts=
