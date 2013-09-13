@@ -22,6 +22,8 @@ SET exclude_from_scope=exclude-from-scope
 
 SET exclude_from_scope_script=%exclude_from_scope%.bat
 
+SET software_present=software-present.txt
+
 :: ONLY VALID for AMD64 systems and only exists on them.
 :: Contains all installed 32-bit packages on an AMD64 system.
 SET regKey_wow6432node=HKLM\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall
@@ -129,7 +131,7 @@ __EPOCS_FO_TUO__
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :REMOVE_DUPLICATE_ENTRIES
 
-    SETLOCAL enableDelayedExpansion
+    SETLOCAL
 
     SORT %installed_full_house% /o %installed_full_house%
 
@@ -159,7 +161,7 @@ __EPOCS_FO_TUO__
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :CREATE_SCRIPT_EXCLUDE_FROM_SCOPE_SCRIPT
 
-    SETLOCAL EnableDelayedExpansion
+    SETLOCAL
 
     SET line=
 
@@ -181,7 +183,7 @@ __EPOCS_FO_TUO__
             FOR /F "tokens=*" %%# IN ('type %exclude_from_scope%.txt') DO (
                 SET x=%%#
                 SET y=!x:~0,2%!
-                :: exclude comments
+                :: excludes comments inside of %exclude_from_scope%
                 IF !y! NEQ :: (
                     SET "line=    ^| findstr /V "%%#" ^"
                     ECHO !line!>> %exclude_from_scope_script%
@@ -190,7 +192,7 @@ __EPOCS_FO_TUO__
             ECHO %%_>> %exclude_from_scope_script%
             SET $=3
         ) ELSE IF !$! EQU 1 (
-            :: write header comments
+            :: write comments at the begin of %exclude_from_scope_script%
             SET x=%%_
             SET y=!x:~0,3%!
             ECHO %%_>> %exclude_from_scope_script%
@@ -201,10 +203,6 @@ __EPOCS_FO_TUO__
             SET $=1
         )
     )
-
-    ENDLOCAL
-
-    GOTO :eof
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: To increase the performance, all software entries out of scope/interest
@@ -228,7 +226,10 @@ __EPOCS_FO_TUO__
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :GET_INSTALLED_SOFTWARE
 
-    SETLOCAL enableDelayedExpansion
+    ECHO(
+    ECHO(  Search for installed software in registry.
+    ECHO(  This may take a while...
+    ECHO(
 
     :: delete files from last run
     DEL %installed_full_house% > NUL 2>&1
@@ -242,6 +243,45 @@ __EPOCS_FO_TUO__
 
     CALL :EXCLUDE_FROM_SCOPE
 
+    GOTO :eof
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:SEARCH_SOFTWARE_PRESENT_IN_REGISTRY
+
+    SETLOCAL
+
+    ECHO(
+    ECHO(  [is present]
+
+    DEL %software_present% > NUL 2>&1
+
+    :: reads the %software_to_search% file and lines up the items separated by ':'
+    FOR /f "Delims=" %%_ IN ('type %software_to_search%') DO (
+        SET sts=!sts!%%_:
+    )
+
+    IF defined sts (
+        :: drop last ':'
+        SET sts=!sts:~0,-1!
+    )
+
+    :: look up for the software to search
+    SET "sp=%sts%"
+    FOR /F "tokens=*" %%_ IN ('type %installed_in_scope%') DO (
+        :: iterates over the software names in the search string for each installed software package
+        FOR %%# IN ("%sp::=" "%") DO (
+            ECHO.%%_ | findstr /B %%# > nul
+            IF !errorlevel! EQU 0 (
+                ECHO.    %%_
+                (
+                    ECHO %%_>> %software_present%
+                )
+            )
+        )
+    )
+
     ENDLOCAL
 
     GOTO :eof
@@ -254,42 +294,24 @@ SETLOCAL enableDelayedExpansion
 
 CALL :WINDOWS_VERSION
 
-ECHO(
-ECHO ^  Aquire installed software from registry.
-ECHO ^  This may take a while...
-ECHO(
-
 CALL :CREATE_SCRIPT_EXCLUDE_FROM_SCOPE_SCRIPT %0
 
 :: Fetch the installed software
 CALL :GET_INSTALLED_SOFTWARE
 
-:: reads the %software_to_search% file and lines up the items separated by ':'
-SET sts=
-SET first=0
+ECHO(
+ECHO(  The following software
+ECHO(
+
+
+ECHO(  [as desired]
 FOR /f "Delims=" %%_ IN ('type %software_to_search%') DO (
-    IF !first! == 0 (
-      SET first=1
-      SET sts=%%_
-    ) ELSE (
-      SET sts=!sts!:%%_
-    )
+    ECHO(    %%_
 )
 
-ECHO(
-ECHO ^  Following software is installed:
-ECHO ^  ================================
-ECHO(
+CALL :SEARCH_SOFTWARE_PRESENT_IN_REGISTRY
 
-:: look up for the software to search
-SET "sp=%sts%"
-FOR /F "tokens=*" %%_ IN ('type %installed_in_scope%') DO (
-    :: iterates over the software names in the search string for each installed software package
-    FOR %%# IN ("%sp::=" "%") DO (
-        ECHO %%_ | findstr /B %%#
-    )
-)
-
-::type test.txt
+ECHO(
+ECHO(  [is missing]
 
 ENDLOCAL

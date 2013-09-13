@@ -39,11 +39,21 @@ ___ATAD____
 
 :RUN
 
-    ECHO ^@ECHO OFF>> %exclude_from_scope_script%
-    ECHO(>> %exclude_from_scope_script%
-    ECHO ::>> %exclude_from_scope_script%
-    ECHO :: Don't edit this file.>> %exclude_from_scope_script%
-    ECHO :: It will overwritten by the next run.>> %exclude_from_scope_script%
-    ECHO :: Any changes should be made in '%installed_exclude_from_scope%'.>> %exclude_from_scope_script%
-    ECHO ::>> %exclude_from_scope_script%
-    ECHO(>> %exclude_from_scope_script%
+setlocal EnableDelayedExpansion
+
+set abc=a:b:c:
+
+echo !abc!
+
+set abc=!abc:~0,-1!
+
+echo !abc!
+
+    IF !first! == 0 (
+      SET first=1
+      SET sts=%%_
+    ) ELSE (
+      SET sts=!sts!:%%_
+    )
+
+
