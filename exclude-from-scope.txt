@@ -1,5 +1,5 @@
 ::
-:: Here you can exclude software packages which are lie outside of the scope.
+:: Here you can exclude the software packages which are lie outside of the scope.
 ::
 
 Intel

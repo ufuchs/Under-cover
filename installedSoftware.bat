@@ -14,7 +14,7 @@ SET installed_full_house=installed-full-house.txt
 
 SET installed_in_scope=installed-in-scope.txt
 
-SET software_to_search=software-to-search.txt
+SET software_we_are_looking_for=software-we-are-looking-for.txt
 
 SET installed_exclude_from_scope=installed-exclude-from-scope.txt
 
@@ -248,6 +248,23 @@ __EPOCS_FO_TUO__
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ::
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:SOFTWARE_WE_ARE_LOOKING_FOR
+
+    :: reads the %software_we_are_looking_for% file and lines up the items separated by ':'
+    FOR /f "Delims=" %%_ IN ('type %software_we_are_looking_for%') DO (
+        SET swalf=!swalf!%%_:
+    )
+
+    IF defined swalf (
+        :: drop last ':'
+        SET swalf=!swalf:~0,-1!
+    )
+
+    GOTO :eof
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :SEARCH_SOFTWARE_PRESENT_IN_REGISTRY
 
     SETLOCAL
@@ -257,18 +274,8 @@ __EPOCS_FO_TUO__
 
     DEL %software_present% > NUL 2>&1
 
-    :: reads the %software_to_search% file and lines up the items separated by ':'
-    FOR /f "Delims=" %%_ IN ('type %software_to_search%') DO (
-        SET sts=!sts!%%_:
-    )
-
-    IF defined sts (
-        :: drop last ':'
-        SET sts=!sts:~0,-1!
-    )
-
     :: look up for the software to search
-    SET "sp=%sts%"
+    SET "sp=%swalf%"
     FOR /F "tokens=*" %%_ IN ('type %installed_in_scope%') DO (
         :: iterates over the software names in the search string for each installed software package
         FOR %%# IN ("%sp::=" "%") DO (
@@ -294,6 +301,8 @@ SETLOCAL enableDelayedExpansion
 
 CALL :WINDOWS_VERSION
 
+CALL :SOFTWARE_WE_ARE_LOOKING_FOR
+
 CALL :CREATE_SCRIPT_EXCLUDE_FROM_SCOPE_SCRIPT %0
 
 :: Fetch the installed software
@@ -303,9 +312,8 @@ ECHO(
 ECHO(  The following software
 ECHO(
 
-
 ECHO(  [as desired]
-FOR /f "Delims=" %%_ IN ('type %software_to_search%') DO (
+FOR /f "Delims=" %%_ IN ('type %software_we_are_looking_for%') DO (
     ECHO(    %%_
 )
 
@@ -313,5 +321,11 @@ CALL :SEARCH_SOFTWARE_PRESENT_IN_REGISTRY
 
 ECHO(
 ECHO(  [is missing]
+FOR /f "Delims=" %%_ IN ('type %software_we_are_looking_for%') DO (
+
+
+    ECHO(    %%_
+)
+
 
 ENDLOCAL
