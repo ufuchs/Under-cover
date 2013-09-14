@@ -16,13 +16,13 @@ SET installed_in_scope=installed-in-scope.txt
 
 SET software_we_are_looking_for=software-we-are-looking-for.txt
 
-SET installed_exclude_from_scope=installed-exclude-from-scope.txt
-
-SET exclude_from_scope=exclude-from-scope
+SET exclude_from_scope=software-we-will-exclude
 
 SET exclude_from_scope_script=%exclude_from_scope%.bat
 
 SET software_present=software-present.txt
+
+SET software_missing=software-missing.txt
 
 :: ONLY VALID for AMD64 systems and only exists on them.
 :: Contains all installed 32-bit packages on an AMD64 system.
@@ -56,21 +56,19 @@ FOR /F "tokens=*" %%_ IN ('type %1 ^
 __EPOCS_FO_TUO__
 
 ::
-:: SUBROUTINES
+:: SUBROUTINES SECTION
 ::
 
 ::::::::::::::::::::::::::::::::::::::::
 :WINDOWS_VERSION
 ::::::::::::::::::::::::::::::::::::::::
 
-    SETLOCAL
-
-    ECHO [System - OS-Version]
     ECHO(
-    FOR /F "tokens=*" %%_ IN ('wmic os get Caption^, OSArchitecture ^
-        ^| findstr /I bit') DO ECHO ^  %%_
+    ECHO(  [OS-Version]
 
-    ENDLOCAL
+
+    FOR /F "tokens=*" %%_ IN ('wmic os get Caption^, OSArchitecture ^
+        ^| findstr /I bit') DO ECHO(    %%_
 
     GOTO :eof
 
@@ -138,7 +136,7 @@ __EPOCS_FO_TUO__
     :: drop duplicates
     SET line=
     SET prevLine=
-    FOR /f "tokens=* delims=" %%_ IN ('type %installed_full_house%') DO (
+    FOR /f "tokens=* delims=" %%_ IN (%installed_full_house%) DO (
         IF %%_ NEQ !prevLine! (
           ECHO %%_>> temp.txt
           SET prevLine=%%_
@@ -180,7 +178,7 @@ __EPOCS_FO_TUO__
         IF !$! EQU 3 (
             ECHO(%%_>> %exclude_from_scope_script%
         ) ELSE IF !$! EQU 2 (
-            FOR /F "tokens=*" %%# IN ('type %exclude_from_scope%.txt') DO (
+            FOR /F "tokens=*" %%# IN (%exclude_from_scope%.txt) DO (
                 SET x=%%#
                 SET y=!x:~0,2%!
                 :: excludes comments inside of %exclude_from_scope%
@@ -227,7 +225,7 @@ __EPOCS_FO_TUO__
 :GET_INSTALLED_SOFTWARE
 
     ECHO(
-    ECHO(  Search for installed software in registry.
+    ECHO(  Now looking for installed software in registry.
     ECHO(  This may take a while...
     ECHO(
 
@@ -250,13 +248,14 @@ __EPOCS_FO_TUO__
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :SOFTWARE_WE_ARE_LOOKING_FOR
 
-    :: reads the %software_we_are_looking_for% file and lines up the items separated by ':'
-    FOR /f "Delims=" %%_ IN ('type %software_we_are_looking_for%') DO (
+    ::  reads the %software_we_are_looking_for% file
+    ::+ and lines up the items separated by ':'
+    FOR /f "Delims=" %%_ IN (%software_we_are_looking_for%) DO (
         SET swalf=!swalf!%%_:
     )
 
-    IF defined swalf (
-        :: drop last ':'
+    IF DEFINED swalf (
+        :: drop the last ':'
         SET swalf=!swalf:~0,-1!
     )
 
@@ -265,21 +264,36 @@ __EPOCS_FO_TUO__
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ::
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:SEARCH_SOFTWARE_PRESENT_IN_REGISTRY
+:REPORT_PREAMPLE
+
+    ECHO(  The following software
+    ECHO(
+
+    ECHO(  [as desired is]
+    FOR /f %%_ IN (%software_we_are_looking_for%) DO (
+        ECHO(    %%_
+    )
+
+    GOTO :eof
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:REPORT_SOFTWARE_PRESENT_IN_REGISTRY
 
     SETLOCAL
 
     ECHO(
-    ECHO(  [is present]
+    ECHO(  [present]
 
     DEL %software_present% > NUL 2>&1
 
     :: look up for the software to search
     SET "sp=%swalf%"
-    FOR /F "tokens=*" %%_ IN ('type %installed_in_scope%') DO (
+    FOR /F "tokens=*" %%_ IN (%installed_in_scope%) DO (
         :: iterates over the software names in the search string for each installed software package
         FOR %%# IN ("%sp::=" "%") DO (
-            ECHO.%%_ | findstr /B %%# > nul
+            ECHO.%%_ | findstr /B %%# > NUL
             IF !errorlevel! EQU 0 (
                 ECHO.    %%_
                 (
@@ -293,9 +307,37 @@ __EPOCS_FO_TUO__
 
     GOTO :eof
 
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:REPORT_SOFTWARE_MISSING_IN_REGISTRY
+
+    SETLOCAL
+
+    ECHO(
+    ECHO(  [missing]
+
+    DEL %software_missing% > NUL 2>&1
+
+    :: http://stackoverflow.com/questions/11461432/batch-file-to-compare-contents-of-a-text-file
+    FOR /f %%i in (%software_present%) DO SET %%i=%%i
+    FOR /f %%j in (%software_we_are_looking_for%) DO IF NOT DEFINED %%j (
+        ECHO(    %%j
+        ECHO(%%j>> %software_missing%
+    )
+
+    ENDLOCAL
+
+    GOTO :eof
+
+
 ::::::::::::::::::::::::::::::::::::::::
 :MAIN
 ::::::::::::::::::::::::::::::::::::::::
+
+ECHO(
+ECHO(  STAGE ONE - Checking your system
+ECHO(  ================================
 
 SETLOCAL enableDelayedExpansion
 
@@ -308,24 +350,10 @@ CALL :CREATE_SCRIPT_EXCLUDE_FROM_SCOPE_SCRIPT %0
 :: Fetch the installed software
 CALL :GET_INSTALLED_SOFTWARE
 
-ECHO(
-ECHO(  The following software
-ECHO(
+CALL :REPORT_PREAMPLE
 
-ECHO(  [as desired]
-FOR /f "Delims=" %%_ IN ('type %software_we_are_looking_for%') DO (
-    ECHO(    %%_
-)
+CALL :REPORT_SOFTWARE_PRESENT_IN_REGISTRY
 
-CALL :SEARCH_SOFTWARE_PRESENT_IN_REGISTRY
-
-ECHO(
-ECHO(  [is missing]
-FOR /f "Delims=" %%_ IN ('type %software_we_are_looking_for%') DO (
-
-
-    ECHO(    %%_
-)
-
+CALL :REPORT_SOFTWARE_MISSING_IN_REGISTRY
 
 ENDLOCAL

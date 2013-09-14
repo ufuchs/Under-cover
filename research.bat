@@ -19,7 +19,6 @@ for /f "eol=: delims=" %%S in ("!str!") do (
 :: http://stackoverflow.com/questions/7308586/using-batch-echo-with-special-characters
 for /f "useback delims=" %%_ in (%0) do (
   if "%%_"=="___ATAD___" set $=
-  if defined $ echo(Test
   if defined $ echo(%%_
   if "%%_"=="___DATA___" set $=1
 )
@@ -27,33 +26,20 @@ pause
 goto :eof
 
 ___DATA____
-FOR /F "tokens=*" %%a IN ('type %software_all%
 <?xml version="1.0" encoding="utf-8" ?>
  <root>
    <data id="1">
       hello world
    </data>
  </root>
-ECHO %%a>> %software_in_scope%
 ___ATAD____
 
 :RUN
 
-setlocal EnableDelayedExpansion
+:: http://stackoverflow.com/questions/11461432/batch-file-to-compare-contents-of-a-text-file
+setlocal
+for /f %%i in (a.txt) do (
+  set %%i=%%i
+  )
 
-set abc=a:b:c:
-
-echo !abc!
-
-set abc=!abc:~0,-1!
-
-echo !abc!
-
-    IF !first! == 0 (
-      SET first=1
-      SET sts=%%_
-    ) ELSE (
-      SET sts=!sts!:%%_
-    )
-
-
+for /f %%j in (b.txt) do if not defined %%j echo %%j
