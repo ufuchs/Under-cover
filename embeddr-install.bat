@@ -9,112 +9,221 @@
 
 @ECHO OFF
 
-:: SETLOCAL EnableDelayedExpansion
+SETLOCAL EnableDelayedExpansion
 
-:: Batch vars (no edits necessary)
+SET platform_arch=
+SET node_installed=0
+SET precheck=0
+
+::::
+:: paths
+::::
+
 SET base=%~dp0%
 SET nodejsPath=%base%node
 
-< NUL COPY /Y NUL bbb.txt > NUL
-FOR /F "tokens=*" %%a IN ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s ^| findstr /B ".*DisplayName"') DO ECHO %%a >> bbb.txt
+::::
+:: registry keys
+::::
 
-:: Aquire platform architecture. Gets 'AMD64' or 'x86'
-FOR /f "tokens=2* delims= " %%a IN ('reg query "HKLM\System\CurrentControlSet\Control\Session Manager\Environment" /v "PROCESSOR_ARCHITECTURE"') DO SET _arch_=%%b
+SET regKey_Environment=^
+    HKLM\System\CurrentControlSet\Control\Session Manager\Environment
 
-ECHO.
-CALL :WINDOWS_VERSION
-
-GOTO :MENU
+GOTO :MAIN
 
 ::::::::::::::::::::::::::::::::::::::::
 :: SUB ROUTINES
 ::::::::::::::::::::::::::::::::::::::::
 
-::::::::::::::::::::::::::::::::::::::::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Aquire the platform architecture. Gets 'AMD64' or 'x86'
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:PLATFORM_ARCHITECTURE
+
+    FOR /f "tokens=2* delims= " %%a IN ('reg query ^
+        "%regKey_Environment%" ^
+        /v ^
+        "PROCESSOR_ARCHITECTURE"') DO SET platform_arch=%%b
+
+    GOTO :eof
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: 
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :WINDOWS_VERSION
-::::::::::::::::::::::::::::::::::::::::
 
     SETLOCAL
 
     ECHO [System - OS-Version]
-    FOR /F "tokens=*" %%a IN ('wmic os get Caption^, OSArchitecture ^| findstr /I bit') DO ECHO ^  %%a
+    FOR /F "tokens=*" %%_ IN ('wmic os get Caption^, OSArchitecture ^
+        ^| findstr /I bit') DO ECHO(  %%_
 
-    ENDLOCAL
     GOTO :eof
 
-::::::::::::::::::::::::::::::::::::::::
-:INSTALL
-::::::::::::::::::::::::::::::::::::::::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: 
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:SWITCH_TO_NODE
 
-    SETLOCAL
+    ECHO(
+    ECHO(====================
+    ECHO(SWITCHING TO Node.js
+    ECHO(====================
+    ECHO(
 
-    :: Check if node.js is installed
-    IF NOT EXIST "%nodejsPath%\node.exe" (
-        CALL :INSTALL_NODE
+    SET node=
+
+    IF %node_installed% EQU 1 (
+        SET node=node.exe
+    ) ELSE IF %node_installed% EQU 2 (
+        SET node=%nodejsPath%\node.exe
     )
 
-    %nodejsPath%\node.exe %base%\install.js
+    %node% install.js
 
-    ENDLOCAL
+    GOTO :eof
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: 
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:PRE_CHECK_NETWORK
+
+    SET result=[ ko ]
+
+    ping -n 1 8.8.8.8 > NUL 2>&1
+
+    IF NOT %errorlevel% EQU 0 (
+        SET precheck=1 
+    ) ELSE (
+        SET result=[ OK ]
+    )
+
+    < NUL SET /P ^ x="* Check network connection by `ping 8.8.8.8`"
+
+    ECHO(                      %result%
+
+    GOTO :eof
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:PRE_CHECK_FOR_NODE
+
+    SET result=[ ko ]
+
+    :: invoke global 'nodejs' installation
+    node --version > NUL 2>&1
+
+    IF NOT !errorlevel! EQU 0 (
+
+        :: invoke portable 'nodejs' installation
+        %nodejsPath%\node.exe --version > NUL 2>&1
+
+        IF NOT !errorlevel! EQU 0 (
+            SET precheck=1
+        ) ELSE (
+            SET node_installed=2
+            SET result=[ OK ]
+        )
+
+    ) ELSE (
+        SET node_installed=1
+        SET result=[ OK ]
+    )
+
+::    < NUL SET /P ^ x="* Check presense of `node.js`"
+
+::    ECHO(                                     %result%
+
+    GOTO :eof
+
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:PRE_CHECK
+
+    ECHO(
+    ECHO(====================
+    ECHO(CHECKING PREREQUESTS
+    ECHO(====================
+    ECHO(    
+
+::    CALL :PRE_CHECK_NETWORK
+
+    IF NOT %precheck% EQU 0 (
+        ECHO(
+        ECHO(  This script requires a working internet connection.
+        ECHO(  Please check this and then come back.
+        ECHO(  Terminate execution.
+        ECHO(    
+        GOTO :LEAVE
+    )
+
+    SET precheck=0
+    CALL :PRE_CHECK_FOR_NODE
+
+    IF NOT %precheck% EQU 0 (
+
+        ECHO(* 'Node.js' is missing. Try to install.
+        ECHO(    
+
+        CALL :INSTALL_NODE_LOCAL
+
+        :: after installation re-run 'PRE_CHECK_FOR_NODE' again
+        SET precheck=0
+        CALL :PRE_CHECK_FOR_NODE
+
+        IF NOT %precheck% EQU 0 (
+
+            ECHO(
+            ECHO(  Node.js can't be invoked.
+            ECHO(  Terminate execution.
+            ECHO(    
+
+        ) ELSE (
+
+            ECHO(
+            ECHO(  Node.js is ready to use.
+            ECHO(    
+
+        )
+
+    ) ELSE (
+
+        ECHO(  All things all right.
+    )
+
     GOTO :eof
 
 ::::::::::::::::::::::::::::::::::::::::
-:INSTALL_NODE
+:INSTALL_NODE_LOCAL
 ::::::::::::::::::::::::::::::::::::::::
 
-    SETLOCAL
+    CALL :PLATFORM_ARCHITECTURE
 
-    SET nodejs_arch=%_arch_%
-    IF "%_arch_%" EQU "AMD64" SET nodejs_arch=x64
+    ECHO(  ^|
+    ECHO(  ^| Node.js Portable v1.2
+    ECHO(  ^| Copyright(c) 2013 Cr@zy ^<webmaster@crazyws.fr^>
+    ECHO(  ^|    
 
-    CALL %base%\win7\nodejs-portable.bat unattended %nodejs_arch%
+    CALL %base%\win7\nodejs-portable.bat ^
+        unattended ^
+        %platform_arch%
 
-    ECHO ^  Download and installation managed by 'nodejs-portable'
-    ECHO ^  Copyright(c) 2013 Cr@zy ^<webmaster@crazyws.fr^>
-
-    ENDLOCAL
     GOTO :eof
 
 ::::::::::::::::::::::::::::::::::::::::
-:CHECK_FOR_INSTALLED_PACKAGES
+:MAIN
 ::::::::::::::::::::::::::::::::::::::::
 
-    SETLOCAL
+CALL :PRE_CHECK
 
+IF NOT %precheck% EQU 0 GOTO :LEAVE
 
-    ENDLOCAL
-    GOTO :eof
+CALL :SWITCH_TO_NODE
 
-::::::::::::::::::::::::::::::::::::::::
-:MENU
-::::::::::::::::::::::::::::::::::::::::
-
-:: CLS
-
-ECHO.
-ECHO  1 - PreCheck
-ECHO  2 - Install
-ECHO  3 - Exit
-ECHO.
-SET /P nodejsTask=Choose a task:
-ECHO.
-
-IF %nodejsTask% == 1 CALL :CHECK_FOR_INSTALLED_PACKAGES && GOTO TASK_DONE
-IF %nodejsTask% == 2 CALL :INSTALL && GOTO TASK_DONE
-IF %nodejsTask% == 3 GOTO LEAVE
-
-::::::::::::::::::::::::::::::::::::::::
-:TASK_DONE
-::::::::::::::::::::::::::::::::::::::::
-
-ECHO.
-PAUSE
-GOTO MENU
-
-::::::::::::::::::::::::::::::::::::::::
 :LEAVE
-::::::::::::::::::::::::::::::::::::::::
 
 ENDLOCAL
 
-:: java -version 2>&1 | findstr SE

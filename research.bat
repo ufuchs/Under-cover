@@ -34,12 +34,33 @@ ___DATA____
  </root>
 ___ATAD____
 
+
+
+__WSH_SCRIPT__
+
+WScript.StdOut.Write "  Download " 
+dim http: set http = createobject("WinHttp.WinHttpRequest.5.1")
+dim bStrm: set bStrm = createobject("Adodb.Stream")
+http.Open "GET", %nodejsUrl%, True
+http.Send
+while http.WaitForResponse(0) = 0
+    WScript.StdOut.Write "."
+    WScript.Sleep 1000
+wend
+WScript.StdOut.WriteLine " [HTTP " ^& http.Status ^& " " ^& http.StatusText ^& "]"
+WScript.StdOut.Write "  "
+with bStrm
+    .type = 1 '//binary
+    .open
+    .write http.responseBody
+    .savetofile "%TEMP%\%nodejsMsiPackage%", 2
+end with
+
+__TPIRCS_HSW__
+
 :RUN
 
-:: http://stackoverflow.com/questions/11461432/batch-file-to-compare-contents-of-a-text-file
-setlocal
-for /f %%i in (a.txt) do (
-  set %%i=%%i
-  )
 
-for /f %%j in (b.txt) do if not defined %%j echo %%j
+
+
+ 

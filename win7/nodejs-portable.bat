@@ -30,24 +30,16 @@ SETLOCAL EnableDelayedExpansion
 TITLE Node.js Portable v1.2
 
 :: Settings
-SET nodejsVersion=0.10.17
-
-:: !absolute critical sequence!
-SET arch=%2
+SET nodejsVersion=0.10.18
 
 :: http://stackoverflow.com/questions/1291941/batch-files-number-of-command-line-arguments
-IF [%2] == [] (
-    SET arch=x86
-    SET archDir=
-) ELSE (
-    SET arch=%2
-    SET archDir=
-    IF %arch% == x64 SET archDir=%2/
+SET archDir=
+SET arch=%2
+
+IF %arch% EQU AMD64 (
+    SET archDir=x64/
+    SET arch=x64
 )
-
-::echo %archDir%
-
-::GOTO :EOF
 
 :: Batch vars (no edits necessary)
 SET nodejsPath=%CD%\node
@@ -66,10 +58,9 @@ SET installMode=1
 IF "%1" == "unattended" (
     SET installMode=2
     SET nodejsTask=2
-    ECHO [package 'nodejs']
-    ECHO ^  Url : %nodejsUrl%
-    ECHO ^  Dest: %nodejsPath%
-    ECHO.
+    ECHO(  ^| Url : %nodejsUrl%
+    ECHO(  ^| Dest: %nodejsPath%
+    ECHO(  ^|
     GOTO INSTALL
 ) ELSE (
     CLS
@@ -109,7 +100,7 @@ SET TEMP=%nodejsPath%\tmp
 IF NOT EXIST "%TEMP%" MKDIR "%TEMP%"
 
 :: Prepare cscript to download node.js
-ECHO WScript.StdOut.Write "  Download " >%nodejsInstallVbs%
+ECHO WScript.StdOut.Write "  | Download " >%nodejsInstallVbs%
 :: Switched to 'WinHttp.WinHttpRequest.5.1'
 ECHO dim http: set http = createobject("WinHttp.WinHttpRequest.5.1") >>%nodejsInstallVbs%
 ECHO dim bStrm: set bStrm = createobject("Adodb.Stream") >>%nodejsInstallVbs%
@@ -134,6 +125,13 @@ ECHO end with >>%nodejsInstallVbs%
 
 :: Download latest version in the current folder
 cscript.exe /NoLogo %nodejsInstallVbs%
+
+IF NOT EXIST "%TEMP%\%nodejsMsiPackage%" (
+
+    ECHO(  ^| Download failed
+    ECHO(  ^|  
+    GOTO :EXIT
+)
 
 :: Extract the MSI package
 ::ECHO Install node.js in %nodejsPath%...
