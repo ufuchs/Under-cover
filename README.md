@@ -11,7 +11,7 @@ NOTE:
 Subsequent experiences have been taken:
 
 PRO:
-* Sub routines are possible
+* Sub routines are possible. So you can give your source code a structure.
 * Self-Generating incl. invoking of script files are possible. See 'temp/software-we-will-exclude.bat' after first run.
 
 
