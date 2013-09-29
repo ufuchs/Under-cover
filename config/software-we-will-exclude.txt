@@ -1,0 +1,12 @@
+::
+:: Here you can exclude the software packages which are lie outside of the scope.
+::
+
+Intel
+Microsoft
+C++
+SQL
+@
+Realtek
+VMware
+Windows Driver
