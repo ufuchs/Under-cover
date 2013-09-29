@@ -33,7 +33,7 @@ __EPOCS_FO_TUO__
 :ENTRY
 
 ::::
-:: common 
+:: common
 ::::
 
 SET proc_arch=
@@ -149,6 +149,7 @@ GOTO :MAIN
 
     GOTO :eof
 
+
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Gets all installed software on a X86 system
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -163,9 +164,10 @@ GOTO :MAIN
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Gets all installed software on an AMD64 system
-:: On AMD64 systems the 32-bit software lies under 'wow6432node' 
+:: On AMD64 systems the 32-bit software lies under 'wow6432node'
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :GET_INSTALLED_SOFTWARE_ON_AMD64
+
 
     :: x86(32-bit) packages
     CALL :GET_SOFTWARE_BY_REGKEY ^
@@ -289,7 +291,7 @@ GOTO :MAIN
 
 :: CHECK comment
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-::  Transforms the content of the file %software_we_are_looking_for% into 
+::  Transforms the content of the file %software_we_are_looking_for% into
 ::+ an internal string representation delimited by ':'
 ::
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -377,9 +379,9 @@ GOTO :MAIN
     )
 
     ECHO(
-    ECHO(    
-    ECHO(  All installed software can be found in 
-    ECHO(    
+    ECHO(
+    ECHO(  All installed software can be found in
+    ECHO(
     ECHO(    'temp\software-on-system.txt'
 
 
