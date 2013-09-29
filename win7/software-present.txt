@@ -1,4 +1,0 @@
-avast Free Antivirus
-Java 7 Update 40
-Java Auto Updater
-Node.js
